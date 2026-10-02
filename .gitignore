@@ -34,6 +34,7 @@ out/
 # TypeScript
 # ==============================
 *.tsbuildinfo
+*.docx
 
 # ==============================
 # Logs
@@ -74,9 +75,14 @@ Desktop.ini
 # ==============================
 .directory
 .Trash-*
+.Trash/
+.Trash-*/
+Trash-*/
+*.trashinfo
 .nfs*
+lost+found/
 
 # ==============================
 # Windows Zone.Identifier
 # ==============================
-*:Zone.Identifier
+*:Zone.Identifier*
