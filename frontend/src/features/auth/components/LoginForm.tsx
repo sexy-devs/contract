@@ -1,4 +1,5 @@
 import { useState, type SubmitEvent } from "react";
+import { Link } from "react-router-dom";
 import type { LoginPayload } from "../api/authApi";
 
 type Props = {
@@ -107,9 +108,9 @@ function LoginForm({ onSubmit, loading, error }: Props) {
 
         <p className="text-center">
           ¿No tienes cuenta?{" "}
-          <span className="text-sky-800" aria-hidden="true">
-            <a href="#" className="no-underline">Registrate</a>
-          </span>
+          <Link to="/registrarse" className="text-sky-800 no-underline">
+            Registrate
+          </Link>
         </p>
       </div>
     </div>

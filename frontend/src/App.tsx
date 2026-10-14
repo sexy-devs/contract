@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState, type ReactNode } from "react";
 import Login from './features/auth/pages/Login';
-import SignUp from './features/auth/pages/SignUp';
+import Register from './features/auth/pages/Register';
 import Catalog from './features/catalog/pages/Catalog';
 import Profile from './features/profile/pages/Profile';
 import Chat from './features/messages/pages/Chat';
@@ -35,7 +35,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/iniciar-sesion" element={<Login />} />
-        <Route path="/registrarse" element={<SignUp />} />
+        <Route path="/registrarse" element={<Register />} />
         <Route path="/catalogo" element={
           <PrivateRoute>
             <Catalog />
