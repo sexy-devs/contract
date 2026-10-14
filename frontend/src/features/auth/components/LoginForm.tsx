@@ -55,6 +55,7 @@ function LoginForm({ onSubmit, loading, error }: Props) {
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={!!errors.email}
               aria-describedby="email-error"
+              placeholder="nombre@correo.com"
               className={`border-2 rounded-md p-2.5 ${errors.email ? "border-red-500" : "border-gray-200"}`}
             />
           </div>

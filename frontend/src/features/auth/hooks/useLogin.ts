@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { login, type LoginPayload } from "../api/authApi";
+import { useNavigate } from "react-router-dom";
 
 export function useLogin() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,6 +14,7 @@ export function useLogin() {
     try {
       const data = await login(payload);
       localStorage.setItem("token", data.token);
+      navigate('/');
       return data;
     } catch {
       setError("Credenciales inválidas.");

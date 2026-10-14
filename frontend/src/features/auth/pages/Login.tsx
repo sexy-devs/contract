@@ -6,7 +6,6 @@ function Login() {
 
   async function handleSubmit(payload: { email: string; password: string }) {
     await submit(payload);
-    return (console.log("continuar aca"))
   }
   return (
     <div id="login-page" className="bg-indigo-50 w-screen h-screen">
