@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { MulterError } from "multer";
 import { ZodError } from "zod";
 
 import { AppError } from "../errors/AppError";
@@ -11,6 +12,12 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
 
   if (error instanceof ZodError) {
     res.status(400).json({ error: "Datos inválidos", details: error.issues });
+    return;
+  }
+
+  if (error instanceof MulterError) {
+    const message = error.code === "LIMIT_FILE_SIZE" ? "El archivo supera el tamaño máximo permitido" : error.message;
+    res.status(400).json({ error: message });
     return;
   }
 

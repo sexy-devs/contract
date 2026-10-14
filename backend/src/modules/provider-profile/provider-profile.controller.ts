@@ -18,6 +18,11 @@ export async function replaceServicesHandler(req: Request, res: Response) {
 }
 
 export async function createMatriculaHandler(req: Request, res: Response) {
-  const matricula = await providerProfileService.createMatricula(req.user!.sub, req.body);
+  const matricula = await providerProfileService.createMatricula(req.user!.sub, req.body, req.file);
   res.status(201).json(matricula);
+}
+
+export async function getMyMatriculaHandler(req: Request, res: Response) {
+  const matricula = await providerProfileService.getMyMatricula(req.user!.sub);
+  res.status(200).json(matricula);
 }
