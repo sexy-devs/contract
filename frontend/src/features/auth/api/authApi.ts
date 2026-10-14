@@ -1,21 +1,42 @@
+import { apiClient } from "../../../lib/api";
+
 export type LoginPayload = { email: string; password: string };
-export type LoginResponse = { token: string; user: { id: number; email: string } };
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+export type RegisterPayload = {
+  nombre: string;
+  apellido: string;
+  email: string;
+  password: string;
+  telefono: string;
+  rol: "cliente" | "profesional";
+};
 
-export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: payload.email,
-      contrasena: payload.password,
-    }),
+export type AuthUser = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  fotoUrl: string | null;
+  rol: "cliente" | "profesional" | "admin";
+};
+
+export type AuthResponse = { token: string; usuario: AuthUser };
+
+export function login(payload: LoginPayload): Promise<AuthResponse> {
+  return apiClient.post<AuthResponse>("/auth/login", {
+    email: payload.email,
+    contrasena: payload.password,
   });
+}
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Fallo al iniciar sesión, credenciales inválidas");
-  }
-  return res.json();
+export function register(payload: RegisterPayload): Promise<AuthResponse> {
+  return apiClient.post<AuthResponse>("/auth/registro", {
+    nombre: payload.nombre,
+    apellido: payload.apellido,
+    email: payload.email,
+    contrasena: payload.password,
+    telefono: payload.telefono,
+    rol: payload.rol,
+  });
 }
