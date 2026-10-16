@@ -61,6 +61,8 @@ export async function searchProviders(input: SearchProvidersInput) {
       verificado: profesionales.verificado,
       disponibilidad: profesionales.disponibilidad,
       zona: localidades.nombre,
+      fotoUrl: usuarios.fotoUrl,
+      oficio: sql<string | null>`string_agg(distinct ${servicios.nombre}, ', ')`.as("oficio"),
       precioDesde: sql<number | null>`min(${serviciosXProfesional.monto})`.as("precio_desde"),
       distanciaKm: hasOrigin
         ? distanciaKmExpr(input.lat as number, input.lng as number).as("distancia_km")

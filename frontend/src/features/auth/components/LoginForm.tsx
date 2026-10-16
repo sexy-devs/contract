@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 import type { LoginPayload } from "../api/authApi";
+import LogoContract from "../../../components/layout/LogoContract";
 
 type Props = {
   onSubmit: (payload: LoginPayload) => void;
@@ -12,13 +13,16 @@ function LoginForm({ onSubmit, loading, error }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [hiddenPassword, setHiddenPassword] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
 
   function validate() {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email) newErrors.email = "Escriba su email";
-    else if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = "Ingresa un email válido";
+    else if (!/^\S+@\S+\.\S+$/.test(email))
+      newErrors.email = "Ingresa un email válido";
 
     if (!password) newErrors.password = "Escriba su contraseña";
 
@@ -32,16 +36,14 @@ function LoginForm({ onSubmit, loading, error }: Props) {
     onSubmit({ email, password });
   }
 
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
-      <h2 className="text-3xl text-center font-carlito">C logo Contract</h2>
+      <LogoContract />
       <div className="login-form bg-white w-140 mx-auto p-10 rounded-lg font-carlito shadow-md">
         <h2 className="text-3xl">Iniciar Sesión</h2>
         <p className="text-gray-600">Ingresá con tu email y contraseña</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
           <div className="flex flex-col gap-1 mt-5">
             <label htmlFor="email" className="flex items-center gap-1">
               Email{" "}
@@ -61,7 +63,9 @@ function LoginForm({ onSubmit, loading, error }: Props) {
             />
           </div>
           {errors.email && (
-            <p id="email-error" className="text-sm text-red-600">{errors.email}</p>
+            <p id="email-error" className="text-sm text-red-600">
+              {errors.email}
+            </p>
           )}
 
           <div className="flex flex-col gap-1">
@@ -71,7 +75,9 @@ function LoginForm({ onSubmit, loading, error }: Props) {
                 *
               </span>
             </label>
-            <div className={`border-2 rounded-md p-2.5 ${errors.password ? "border-red-500" : "border-gray-200"} flex justify-between items-center h-13`}>
+            <div
+              className={`border-2 rounded-md p-2.5 ${errors.password ? "border-red-500" : "border-gray-200"} flex justify-between items-center h-13`}
+            >
               <input
                 id="password"
                 type={hiddenPassword ? "password" : "text"}
@@ -91,7 +97,9 @@ function LoginForm({ onSubmit, loading, error }: Props) {
               </button>
             </div>
             {errors.password && (
-              <p id="password-error" className="text-sm text-red-600">{errors.password}</p>
+              <p id="password-error" className="text-sm text-red-600">
+                {errors.password}
+              </p>
             )}
           </div>
 

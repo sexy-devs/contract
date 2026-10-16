@@ -4,6 +4,7 @@ import AccountTypeSelector, {
   type AccountType,
 } from "../components/AccountTypeSelector";
 import RegistrationProgress from "../components/RegistrationProgress";
+import LogoContract from "../../../components/layout/LogoContract";
 
 function Register() {
   const [accountType, setAccountType] = useState<AccountType>("cliente");
@@ -15,13 +16,7 @@ function Register() {
   return (
     <main className="min-h-screen bg-indigo-50 font-carlito lg:grid lg:grid-cols-[35%_65%]">
       <aside className="bg-blue-50 px-6 py-8 sm:px-10 lg:px-12 lg:py-12">
-        <div className="flex items-center gap-3">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-sky-800 font-bold text-white">
-            C
-          </span>
-          <span className="text-xl font-bold text-gray-900">Contract</span>
-        </div>
-
+        <LogoContract />
         <div className="mt-10 max-w-sm lg:mt-14">
           <h2 className="text-3xl font-bold leading-tight text-gray-900">
             Conectamos clientes con profesionales de mantenimiento.
