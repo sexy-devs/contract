@@ -14,6 +14,12 @@ export type ProviderRow = {
   precioDesde: string | number | null;
 };
 
+export async function listZones(): Promise<{ id: number; nombre: string }[]> {
+  const res = await fetch(`${API_URL}/api/catalogo/zonas`);
+  if (!res.ok) throw new Error("No se pudieron cargar las zonas");
+  return res.json();
+}
+
 export async function searchProviders(params = "") {
   // fetch de datos para el populate del catálogo
   const res = await fetch(`${API_URL}/api/catalogo/profesionales${params}`);

@@ -46,7 +46,7 @@ function Header() {
       <div className="flex items-center justify-center gap-2.5">
         {profileButton && (
           <button
-            className="mt-2.5 bg-blue-200 p-2 rounded-[14px] flex items-center justify-center"
+            className="mt-2.5 bg-blue-200 p-2 rounded-[14px] flex items-center justify-center text-sky-800"
             onClick={() => navigate("/perfil")}
           >
             Ir a mi perfil

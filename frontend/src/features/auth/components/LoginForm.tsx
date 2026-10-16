@@ -39,7 +39,7 @@ function LoginForm({ onSubmit, loading, error }: Props) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       <LogoContract />
-      <div className="login-form bg-white w-140 mx-auto p-10 rounded-lg font-carlito shadow-md">
+      <div className="login-form bg-white flex flex-col w-full max-w-125 max-[800px]:min-w-[300px] mx-auto p-10 rounded-lg font-carlito shadow-md mt-2.5">
         <h2 className="text-3xl">Iniciar Sesión</h2>
         <p className="text-gray-600">Ingresá con tu email y contraseña</p>
 
@@ -53,12 +53,13 @@ function LoginForm({ onSubmit, loading, error }: Props) {
             </label>
             <input
               id="email"
-              type="email"
+              // no type=email para evitar navegador siendo metiche con los mensajes
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={!!errors.email}
               aria-describedby="email-error"
               placeholder="nombre@correo.com"
+              maxLength={50}
               className={`border-2 rounded-md p-2.5 ${errors.email ? "border-red-500" : "border-gray-200"}`}
             />
           </div>
@@ -84,14 +85,15 @@ function LoginForm({ onSubmit, loading, error }: Props) {
                 value={password}
                 aria-invalid={!!errors.password}
                 aria-describedby="password-error"
-                placeholder="********"
+                placeholder="mi-contraseña-segura"
+                maxLength={50}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full"
               />
               <button
                 type="button"
                 onClick={() => setHiddenPassword(!hiddenPassword)}
-                className="bg-blue-50 text-sky-800 p-2 rounded-lg"
+                className="bg-blue-50 text-sky-800 p-2 rounded-lg hover:bg-blue-100"
               >
                 {hiddenPassword ? "Mostrar" : "Ocultar"}
               </button>
@@ -106,7 +108,7 @@ function LoginForm({ onSubmit, loading, error }: Props) {
           {error && <p>{error}</p>}
           <button
             type="submit"
-            className="bg-sky-800 text-white rounded-lg h-9"
+            className="w-full rounded-lg bg-sky-800 px-4 py-3 font-semibold text-white hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800"
           >
             {loading ? "Ingresando..." : "Iniciar Sesión"}
           </button>
@@ -115,8 +117,11 @@ function LoginForm({ onSubmit, loading, error }: Props) {
         <hr className="mt-5 mb-5 border-gray-200" />
 
         <p className="text-center">
-          ¿No tienes cuenta?{" "}
-          <Link to="/registrarse" className="text-sky-800 no-underline">
+          ¿No tenés cuenta?{" "}
+          <Link
+            to="/registrarse"
+            className="text-sky-800 no-underline hover:underline"
+          >
             Registrate
           </Link>
         </p>

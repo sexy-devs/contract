@@ -139,3 +139,10 @@ export async function getProviderPublicProfile(providerId: number) {
     matriculas: matriculaVigente,
   };
 }
+
+export async function listZones() {
+  return db
+    .select({ id: localidades.id, nombre: localidades.nombre })
+    .from(localidades)
+    .orderBy(localidades.nombre);
+}

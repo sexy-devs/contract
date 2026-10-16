@@ -118,7 +118,7 @@ function ProviderCard({
             </span>
           </p>
           <button
-            className="border-2 border-blue-200 rounded-2xl p-2.5 text-sky-800 h-10 flex items-center"
+            className="border-2 border-blue-200 rounded-2xl p-2.5 text-sky-800 h-10 flex items-center hover:bg-blue-200"
             onClick={() => navigate(`/profile/${id}`)}
           >
             Ver ficha

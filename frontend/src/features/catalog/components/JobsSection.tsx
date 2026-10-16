@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import ProviderCard from "../components/ProviderCard";
 import { searchProviders, type ProviderRow } from "../api/catalogApi";
-import { CrossSVG } from "../../../assets/svg/svgs";
+import { CrossSVG, ArrowUp, ArrowDown } from "../../../assets/svg/svgs";
+import { listZones } from "../api/catalogApi";
 
 const JOBS = ["Plomería", "Pintura", "Gasista", "Electricidad", "Carpintería"];
 
@@ -17,15 +18,24 @@ const ORDER_OPTIONS = [
   { value: "distancia", label: "Distancia" },
 ];
 
+const defaultDirection: Record<string, string> = {
+  calificacion: "desc",
+  precio: "asc",
+  distancia: "asc",
+};
+
 function JobsSection() {
   // muestra la grilla con las tarjetas de los proveedores de servicios
   const [providers, setProviders] = useState<ProviderRow[]>([]);
+  const [zones, setZones] = useState<{ id: number; nombre: string }[]>([]);
+  const [zone, setZone] = useState("");
   const [activeAvailability, setActiveAvailability] = useState("all");
   const [orderBy, setOrderBy] = useState("calificacion");
   const [jobType, setJobType] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [selectingFilters, setSelectingFilters] = useState(false);
+  const [orderDirection, setOrderDirection] = useState("desc");
   const limit = 10;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -44,17 +54,30 @@ function JobsSection() {
   function modifyOrder(type: string) {
     // func encargada del modificador de "ordenar por..."
     setOrderBy(type);
+    setOrderDirection(defaultDirection[type]);
+    setPage(1);
+  }
+
+  function toggleDirection() {
+    setOrderDirection((d) => (d === "asc" ? "desc" : "asc"));
     setPage(1);
   }
 
   useEffect(() => {
+    listZones().then(setZones).catch((err) => console.log(err.message));
+  }, []);
+
+  useEffect(() => {
     const query = new URLSearchParams();
+    if (zone) query.set("zona", zone);
     if (activeAvailability === "only-available")
       query.set("soloDisponibles", "true");
     if (jobType) query.set("servicio", jobType);
     query.set("ordenarPor", orderBy);
     query.set("page", String(page));
     query.set("limit", String(limit));
+    query.set("ordenarPor", orderBy);
+    query.set("orden", orderDirection);
 
     searchProviders(`?${query}`)
       .then((res) => {
@@ -62,7 +85,7 @@ function JobsSection() {
         setTotal(res.pagination.total);
       })
       .catch((err) => console.log(err.message));
-  }, [activeAvailability, jobType, orderBy, page]);
+  }, [zone, activeAvailability, jobType, orderBy, orderDirection, page]);
 
   return (
     <div
@@ -75,7 +98,7 @@ function JobsSection() {
         className="flex justify-between gap-2.5 items-center min-[1025px]:hidden text-[14px]"
       >
         <button
-          className="bg-white border-2 border-gray-200 rounded-[14px] p-2.5 min-w-40"
+          className="bg-white border-2 border-gray-200 rounded-[14px] p-2.5 min-w-40 hover:bg-slate-200 hover:border-gray-300"
           onClick={() => setSelectingFilters(true)}
         >
           Filtros
@@ -89,6 +112,9 @@ function JobsSection() {
               </option>
             ))}
           </select>
+          <button onClick={toggleDirection}>
+            {orderDirection === "asc" ? <ArrowUp /> : <ArrowDown />}
+          </button>
         </div>
       </div>
 
@@ -130,10 +156,14 @@ function JobsSection() {
           <p>Zona</p>
           <select
             id="zone-select"
+            value={zone}
+            onChange={(e) => { setZone(e.target.value); setPage(1); }}
             className="border-2 border-gray-200 rounded-[14px] p-2.5 w-full"
           >
-            <option value="todas">Todas</option>
-            <option value="wip">wip</option>
+            <option value="">Todas</option>
+            {zones.map((z) => (
+              <option key={z.id} value={z.nombre}>{z.nombre}</option>
+            ))}
           </select>
 
           <p>Disponibilidad</p>
@@ -173,6 +203,9 @@ function JobsSection() {
                   {option.label}
                 </button>
               ))}
+              <button onClick={toggleDirection}>
+                {orderDirection === "asc" ? <ArrowUp /> : <ArrowDown />}
+              </button>
             </div>
           </div>
         </div>
@@ -181,23 +214,30 @@ function JobsSection() {
           id="jobs-grid"
           className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(320px,calc((100%-3*0.625rem)/4))),1fr))] gap-2.5 overflow-auto mt-10 mx-auto"
         >
-          {/*mapeo de tarjetas pasando los datos*/}
-          {providers.map((p) => (
-            <ProviderCard
-              key={p.id}
-              id={p.id}
-              nombre={p.nombre}
-              apellido={p.apellido}
-              oficio={p.oficio ?? "Sin especificar"}
-              direccion={p.zona ?? "Sin zona"}
-              fotoUrl={p.fotoUrl}
-              rating={Number(p.calificacionGlobal ?? 0)}
-              reviewsCount={p.cantidadCalificaciones ?? 0}
-              verificado={p.verificado}
-              disponible={!!p.disponibilidad}
-              precioDesde={Number(p.precioDesde ?? 0)}
-            />
-          ))}
+          {/* mapeo de tarjetas pasando los datos */}
+          {providers.length > 0 ? (
+            providers.map((p) => (
+              <ProviderCard
+                key={p.id}
+                id={p.id}
+                nombre={p.nombre}
+                apellido={p.apellido}
+                oficio={p.oficio ?? "Sin especificar"}
+                direccion={p.zona ?? "Sin zona"}
+                fotoUrl={p.fotoUrl}
+                rating={Number(p.calificacionGlobal ?? 0)}
+                reviewsCount={p.cantidadCalificaciones ?? 0}
+                verificado={p.verificado}
+                disponible={!!p.disponibilidad}
+                precioDesde={Number(p.precioDesde ?? 0)}
+              />
+            ))
+          ) : (
+            <h3 className="col-span-full text-center">
+              No hay prestadores disponibles con los filtros seleccionados
+            </h3>
+          )}
+
         </div>
 
         <div className="flex items-center justify-center gap-4 mt-5">
