@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "../../database/client";
-import { matriculas, matriculasXProfesional, profesionales, serviciosXProfesional } from "../../database/schema";
+import { matriculas, matriculasXProfesional, profesionales, servicios, serviciosXProfesional } from "../../database/schema";
 import { NotFoundError, ValidationError } from "../../shared/errors/AppError";
 import { uploadBufferToCloudinary } from "../../shared/upload/cloudinaryUpload";
 import type { CreateMatriculaInput, ReplaceServicesInput, UpdateProviderProfileInput } from "./provider-profile.validation";
@@ -30,6 +30,16 @@ export async function updateProviderProfile(userId: number, input: UpdateProvide
     .returning();
 
   return updated;
+}
+
+export async function getMyServices(userId: number) {
+  const profesional = await findProfesionalByUserId(userId);
+
+  return db
+    .select({ id: serviciosXProfesional.id, idServ: servicios.id, nombre: servicios.nombre, monto: serviciosXProfesional.monto })
+    .from(serviciosXProfesional)
+    .innerJoin(servicios, eq(servicios.id, serviciosXProfesional.idServ))
+    .where(eq(serviciosXProfesional.idProf, profesional.id));
 }
 
 export async function replaceServices(userId: number, input: ReplaceServicesInput) {

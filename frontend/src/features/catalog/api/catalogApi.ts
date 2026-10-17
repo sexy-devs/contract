@@ -45,6 +45,12 @@ export type ProviderPublicProfile = {
   matriculas: { estado: string; fechaExpiracion: string | null }[];
 };
 
+export type ServicioCatalogo = { id: number; nombre: string };
+
+export function listServicios(): Promise<ServicioCatalogo[]> {
+  return apiClient.get<ServicioCatalogo[]>("/catalogo/servicios");
+}
+
 export function searchProviders(params: SearchProvidersParams = {}): Promise<SearchProvidersResponse> {
   const query = new URLSearchParams();
 

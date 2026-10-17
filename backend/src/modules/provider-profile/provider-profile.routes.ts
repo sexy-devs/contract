@@ -7,6 +7,7 @@ import { documentUpload } from "../../shared/upload/documentUpload";
 import {
   createMatriculaHandler,
   getMyMatriculaHandler,
+  getMyServicesHandler,
   getProviderProfileHandler,
   replaceServicesHandler,
   updateProviderProfileHandler,
@@ -18,6 +19,7 @@ export const providerProfileRouter = Router();
 providerProfileRouter.use(requireAuth, requireRole("profesional"));
 providerProfileRouter.get("/me", asyncHandler(getProviderProfileHandler));
 providerProfileRouter.patch("/me", validateBody(updateProviderProfileSchema), asyncHandler(updateProviderProfileHandler));
+providerProfileRouter.get("/me/servicios", asyncHandler(getMyServicesHandler));
 providerProfileRouter.put("/me/servicios", validateBody(replaceServicesSchema), asyncHandler(replaceServicesHandler));
 providerProfileRouter.get("/me/matricula", asyncHandler(getMyMatriculaHandler));
 providerProfileRouter.post(

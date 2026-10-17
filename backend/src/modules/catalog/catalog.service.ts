@@ -101,6 +101,10 @@ export async function searchProviders(input: SearchProvidersInput) {
   };
 }
 
+export async function listServicios() {
+  return db.select({ id: servicios.id, nombre: servicios.nombre }).from(servicios).orderBy(servicios.nombre);
+}
+
 export async function getProviderPublicProfile(providerId: number) {
   const profesional = await db.query.profesionales.findFirst({ where: eq(profesionales.id, providerId) });
 

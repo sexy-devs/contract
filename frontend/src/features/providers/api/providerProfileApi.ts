@@ -23,13 +23,15 @@ export type UpdateProviderProfilePayload = Partial<{
 
 export type ServicioInput = { idServ: number; monto: number };
 
-export type ServicioOfrecido = { id: number; idProf: number; idServ: number; monto: number };
+export type ServicioPropio = { id: number; idServ: number; nombre: string; monto: number };
+
+export type EstadoMatricula = "pendiente" | "aprobada" | "rechazada";
 
 export type Matricula = {
   id: number;
   fotoUrl: string;
   fechaExpiracion: string | null;
-  estado: string;
+  estado: EstadoMatricula;
 };
 
 export function getMyProviderProfile(): Promise<ProviderProfile> {
@@ -40,10 +42,20 @@ export function updateMyProviderProfile(payload: UpdateProviderProfilePayload): 
   return apiClient.patch<ProviderProfile>("/profesionales/me", payload);
 }
 
-export function replaceMyServices(servicios: ServicioInput[]): Promise<ServicioOfrecido[]> {
-  return apiClient.put<ServicioOfrecido[]>("/profesionales/me/servicios", { servicios });
+export function getMyServices(): Promise<ServicioPropio[]> {
+  return apiClient.get<ServicioPropio[]>("/profesionales/me/servicios");
 }
 
-export function createMyMatricula(payload: { fotoUrl: string; fechaExpiracion?: string }): Promise<Matricula> {
-  return apiClient.post<Matricula>("/profesionales/me/matricula", payload);
+export function replaceMyServices(servicios: ServicioInput[]): Promise<unknown> {
+  return apiClient.put("/profesionales/me/servicios", { servicios });
+}
+
+export function getMyMatricula(): Promise<Matricula | null> {
+  return apiClient.get<Matricula | null>("/profesionales/me/matricula");
+}
+
+export function uploadMyMatricula(file: File): Promise<Matricula> {
+  const formData = new FormData();
+  formData.append("documento", file);
+  return apiClient.post<Matricula>("/profesionales/me/matricula", formData);
 }
