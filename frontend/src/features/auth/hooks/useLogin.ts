@@ -14,7 +14,7 @@ export function useLogin() {
     try {
       const data = await login(payload);
       localStorage.setItem("token", data.token);
-      navigate('/');
+      navigate('/catalogo');
       return data;
     } catch {
       setError("Credenciales inválidas.");

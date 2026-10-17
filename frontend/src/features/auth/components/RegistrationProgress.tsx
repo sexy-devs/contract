@@ -36,25 +36,30 @@ function RegistrationProgress({ accountType, currentStep }: Props) {
       >
         {steps.map((step, index) => {
           const stepNumber = index + 1;
-          const isCompletedOrActive = stepNumber <= currentStep;
+          const isCompleted = stepNumber < currentStep;
+          const isActive = stepNumber === currentStep;
+
+          const progressClass = isCompleted
+            ? "bg-sky-800"
+            : isActive
+              ? "bg-sky-800/40"
+              : "bg-gray-200";
+
+          const labelClass = isCompleted
+            ? "font-medium text-sky-800"
+            : isActive
+              ? "font-semibold text-gray-900"
+              : "text-gray-500";
 
           return (
             <li
               key={step}
-              aria-current={stepNumber === currentStep ? "step" : undefined}
+              aria-current={isActive ? "step" : undefined}
               className="min-w-0"
             >
-              <div
-                className={`h-1 rounded-full ${
-                  isCompletedOrActive ? "bg-sky-800" : "bg-gray-200"
-                }`}
-              />
+              <div className={`h-1 rounded-full ${progressClass}`} />
               <span
-                className={`mt-1 block truncate text-xs ${
-                  stepNumber === currentStep
-                    ? "font-semibold text-gray-900"
-                    : "text-gray-500"
-                }`}
+                className={`mt-1 block truncate text-xs ${labelClass}`}
                 title={step}
               >
                 {step}
