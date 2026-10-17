@@ -9,8 +9,8 @@ export function validateBody(schema: ZodType) {
 }
 
 export function validateQuery(schema: ZodType) {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    req.query = schema.parse(req.query) as Request["query"];
+  return (req: Request, res: Response, next: NextFunction) => {
+    res.locals.query = schema.parse(req.query);
     next();
   };
 }

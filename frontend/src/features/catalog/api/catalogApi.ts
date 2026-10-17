@@ -1,32 +1,21 @@
 import { apiClient } from "../../../lib/api";
 
-export type SearchProvidersParams = Partial<{
-  servicio: string;
-  zona: string;
-  soloDisponibles: boolean;
-  ordenarPor: "calificacion" | "precio" | "distancia";
-  lat: number;
-  lng: number;
-  page: number;
-  limit: number;
-}>;
-
-export type ProviderSearchResult = {
+export type ProviderRow = {
   id: number;
   nombre: string;
   apellido: string;
-  descripcion: string | null;
-  calificacionGlobal: number;
-  cantidadCalificaciones: number;
+  fotoUrl: string | null;
+  oficio: string | null;
+  zona: string | null;
+  calificacionGlobal: string | number | null;
+  cantidadCalificaciones: number | null;
   verificado: boolean;
   disponibilidad: string | null;
-  zona: string | null;
-  precioDesde: number | null;
-  distanciaKm: number | null;
+  precioDesde: string | number | null;
 };
 
 export type SearchProvidersResponse = {
-  data: ProviderSearchResult[];
+  data: ProviderRow[];
   pagination: { page: number; limit: number; total: number };
 };
 
@@ -51,17 +40,12 @@ export function listServicios(): Promise<ServicioCatalogo[]> {
   return apiClient.get<ServicioCatalogo[]>("/catalogo/servicios");
 }
 
-export function searchProviders(params: SearchProvidersParams = {}): Promise<SearchProvidersResponse> {
-  const query = new URLSearchParams();
+export function listZones(): Promise<{ id: number; nombre: string }[]> {
+  return apiClient.get<{ id: number; nombre: string }[]>("/catalogo/zonas");
+}
 
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) {
-      query.set(key, String(value));
-    }
-  }
-
-  const queryString = query.toString();
-  return apiClient.get<SearchProvidersResponse>(`/catalogo/profesionales${queryString ? `?${queryString}` : ""}`);
+export function searchProviders(params = ""): Promise<SearchProvidersResponse> {
+  return apiClient.get<SearchProvidersResponse>(`/catalogo/profesionales${params}`);
 }
 
 export function getProviderPublicProfile(id: number): Promise<ProviderPublicProfile> {
