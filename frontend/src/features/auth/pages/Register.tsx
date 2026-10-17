@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AccountTypeSelector, {
   type AccountType,
@@ -22,6 +22,14 @@ import ServicesStep, {
 } from "../components/ServicesStep";
 import DocumentationStep from "../components/DocumentationStep";
 import { useRegister } from "../hooks/useRegister";
+import {
+  replaceProfessionalServices,
+  updateProfessionalProfile,
+} from "../api/providerRegistrationApi";
+import {
+  listServices,
+  type ServiceOption,
+} from "../../catalog/api/catalogApi";
 import {
   hasFieldErrors,
   hasServiceErrors,
@@ -69,6 +77,7 @@ function Register() {
     loading: registrationLoading,
     error: registrationError,
     clearError: clearRegistrationError,
+    accountCreated,
   } = useRegister();
   const [accountType, setAccountType] = useState<AccountType>("cliente");
   const [currentStep, setCurrentStep] = useState(1);
@@ -93,11 +102,35 @@ function Register() {
     useState<FieldErrors<CoverageData>>({});
   const [serviceErrors, setServiceErrors] = useState<ServiceRowError[]>([]);
   const [documentationError, setDocumentationError] = useState("");
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesCatalogError, setServicesCatalogError] = useState("");
 
   const isClientFinalStep = accountType === "cliente" && currentStep === 3;
   const isProfessionalFinalStep =
     accountType === "profesional" && currentStep === 6;
   const isFinalStep = isClientFinalStep || isProfessionalFinalStep;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listServices()
+      .then((options) => {
+        if (!cancelled) setServiceOptions(options);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setServicesCatalogError("No se pudo cargar el catálogo de servicios.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setServicesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleContinue() {
     if (registrationLoading) return;
@@ -164,14 +197,33 @@ function Register() {
       setDocumentationError(error);
       if (error) return;
 
-      await submitRegistration({
-        nombre: personalData.nombre.trim(),
-        apellido: personalData.apellido.trim(),
-        email: personalData.email.trim(),
-        contrasena: personalData.contrasena,
-        telefono: personalData.telefono.trim(),
-        rol: accountType,
-      });
+      await submitRegistration(
+        {
+          nombre: personalData.nombre.trim(),
+          apellido: personalData.apellido.trim(),
+          email: personalData.email.trim(),
+          contrasena: personalData.contrasena,
+          telefono: personalData.telefono.trim(),
+          rol: accountType,
+        },
+        async (token) => {
+          await Promise.all([
+            updateProfessionalProfile(token, {
+              descripcion: professionalInfo.descripcion.trim() || undefined,
+              aniosExperiencia: Number(professionalInfo.aniosExperiencia),
+              aceptaRadioKm: Number(coverageData.aceptaRadioKm),
+              disponibilidad: coverageData.disponibilidad.trim() || undefined,
+            }),
+            replaceProfessionalServices(
+              token,
+              services.map((service) => ({
+                idServ: Number(service.idServ),
+                monto: Number(service.monto),
+              })),
+            ),
+          ]);
+        },
+      );
     }
   }
 
@@ -236,6 +288,7 @@ function Register() {
     value: string,
   ) {
     setProfessionalInfo((data) => ({ ...data, [field]: value }));
+    clearRegistrationError();
     setProfessionalInfoErrors((errors) => {
       const nextErrors = { ...errors };
       delete nextErrors[field];
@@ -245,6 +298,7 @@ function Register() {
 
   function handleCoverageChange(field: keyof CoverageData, value: string) {
     setCoverageData((data) => ({ ...data, [field]: value }));
+    clearRegistrationError();
     setCoverageErrors((errors) => {
       const nextErrors = { ...errors };
       delete nextErrors[field];
@@ -255,6 +309,7 @@ function Register() {
   function handleServicesChange(updatedServices: OfferedServiceData[]) {
     setServices(updatedServices);
     setServiceErrors([]);
+    clearRegistrationError();
   }
 
   function handleDocumentationChange(file: File | null) {
@@ -331,6 +386,9 @@ function Register() {
               <ServicesStep
                 data={services}
                 errors={serviceErrors}
+                options={serviceOptions}
+                loadingOptions={servicesLoading}
+                catalogError={servicesCatalogError}
                 onChange={handleServicesChange}
               />
             ) : (
@@ -348,7 +406,7 @@ function Register() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  disabled={registrationLoading}
+                  disabled={registrationLoading || accountCreated}
                   className="rounded-lg border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Atrás
@@ -362,7 +420,11 @@ function Register() {
                 className="flex-1 rounded-lg bg-sky-800 px-4 py-3 font-semibold text-white hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isFinalStep && registrationLoading
-                  ? "Creando cuenta..."
+                  ? accountCreated
+                    ? "Completando perfil..."
+                    : "Creando cuenta..."
+                  : isFinalStep && accountCreated
+                    ? "Reintentar configuración"
                   : isFinalStep
                     ? "Registrarse"
                     : "Continuar"}

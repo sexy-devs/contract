@@ -15,6 +15,13 @@
       "when": 1791582336996,
       "tag": "0001_high_violations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792275749657,
+      "tag": "0002_seed_services",
+      "breakpoints": true
     }
   ]
 }

@@ -158,6 +158,13 @@ export const openapiDocument = {
         responses: { "200": { description: "Listado paginado de prestadores" } },
       },
     },
+    "/catalogo/servicios": {
+      get: {
+        tags: ["Catálogo"],
+        summary: "Listar servicios disponibles",
+        responses: { "200": { description: "Listado de servicios" } },
+      },
+    },
     "/catalogo/profesionales/{id}": {
       get: {
         tags: ["Catálogo"],

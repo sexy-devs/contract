@@ -14,10 +14,35 @@ export type ProviderRow = {
   precioDesde: string | number | null;
 };
 
+export type ServiceOption = {
+  id: number;
+  nombre: string;
+};
+
+let servicesRequest: Promise<ServiceOption[]> | null = null;
+
 export async function listZones(): Promise<{ id: number; nombre: string }[]> {
   const res = await fetch(`${API_URL}/api/catalogo/zonas`);
   if (!res.ok) throw new Error("No se pudieron cargar las zonas");
   return res.json();
+}
+
+export function listServices(): Promise<ServiceOption[]> {
+  if (!servicesRequest) {
+    servicesRequest = fetch(`${API_URL}/api/catalogo/servicios`).then(
+      async (response) => {
+        if (!response.ok) {
+          throw new Error("No se pudieron cargar los servicios");
+        }
+        return response.json() as Promise<ServiceOption[]>;
+      },
+    ).catch((error) => {
+      servicesRequest = null;
+      throw error;
+    });
+  }
+
+  return servicesRequest;
 }
 
 export async function searchProviders(params = "") {

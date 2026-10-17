@@ -146,3 +146,10 @@ export async function listZones() {
     .from(localidades)
     .orderBy(localidades.nombre);
 }
+
+export async function listServices() {
+  return db
+    .select({ id: servicios.id, nombre: servicios.nombre })
+    .from(servicios)
+    .orderBy(servicios.nombre);
+}
