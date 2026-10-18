@@ -23,8 +23,11 @@ export type ProviderPublicProfile = {
   id: number;
   nombre: string | undefined;
   apellido: string | undefined;
+  fotoUrl: string | null;
+  zona: string | null;
   descripcion: string | null;
   aniosExperiencia: number;
+  aceptaRadioKm: number;
   verificado: boolean;
   disponibilidad: string | null;
   trabajosFinalizados: number;
@@ -32,6 +35,8 @@ export type ProviderPublicProfile = {
   cantidadCalificaciones: number;
   servicios: { id: number; nombre: string; monto: number }[];
   matriculas: { estado: string; fechaExpiracion: string | null }[];
+  trabajos: { fecha: string }[];
+  resenas: { autor: string; calificacion: number; comentario: string | null; fecha: string }[];
 };
 
 export type ServicioCatalogo = { id: number; nombre: string };

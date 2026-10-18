@@ -1,6 +1,7 @@
 //TODO: orden ascendente y descendente en "Ordenar por"
 import { useEffect, useState } from "react";
 import ProviderCard from "../components/ProviderCard";
+import ProviderDetailPanel from "../components/ProviderDetailPanel";
 import { searchProviders, type ProviderRow } from "../api/catalogApi";
 import { CrossSVG, ArrowUp, ArrowDown } from "../../../assets/svg/svgs";
 import { listZones } from "../api/catalogApi";
@@ -36,6 +37,7 @@ function JobsSection() {
   const [total, setTotal] = useState(0);
   const [selectingFilters, setSelectingFilters] = useState(false);
   const [orderDirection, setOrderDirection] = useState("desc");
+  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
   const limit = 10;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -230,6 +232,7 @@ function JobsSection() {
                 verificado={p.verificado}
                 disponible={!!p.disponibilidad}
                 precioDesde={Number(p.precioDesde ?? 0)}
+                onVerFicha={setSelectedProviderId}
               />
             ))
           ) : (
@@ -260,6 +263,10 @@ function JobsSection() {
           </button>
         </div>
       </div>
+
+      {selectedProviderId !== null && (
+        <ProviderDetailPanel providerId={selectedProviderId} onClose={() => setSelectedProviderId(null)} />
+      )}
     </div>
   );
 }

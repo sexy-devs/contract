@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { CheckmarkSVG, StarSVG } from "../../../assets/svg/svgs";
 
 type ProviderCardProps = {
@@ -13,6 +12,7 @@ type ProviderCardProps = {
   verificado: boolean;
   disponible: boolean;
   precioDesde: number;
+  onVerFicha: (id: number) => void;
 };
 
 function ProviderCard({
@@ -28,9 +28,8 @@ function ProviderCard({
   verificado,
   disponible,
   precioDesde,
+  onVerFicha,
 }: ProviderCardProps) {
-  const navigate = useNavigate();
-
   return (
     <div
       id="provider-card"
@@ -119,7 +118,7 @@ function ProviderCard({
           </p>
           <button
             className="border-2 border-blue-200 rounded-2xl p-2.5 text-sky-800 h-10 flex items-center hover:bg-blue-200"
-            onClick={() => navigate(`/profile/${id}`)}
+            onClick={() => onVerFicha(id)}
           >
             Ver ficha
           </button>

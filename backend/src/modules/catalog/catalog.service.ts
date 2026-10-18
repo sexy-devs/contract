@@ -1,11 +1,14 @@
-import { and, countDistinct, eq, ilike, sql } from "drizzle-orm";
+import { and, countDistinct, desc, eq, ilike, sql } from "drizzle-orm";
 
 import { db } from "../../database/client";
 import {
+  calificaciones,
+  clientes,
   codigosXLocalidad,
   localidades,
   matriculas,
   matriculasXProfesional,
+  pedidos,
   profesionales,
   servicios,
   serviciosXProfesional,
@@ -122,8 +125,15 @@ export async function getProviderPublicProfile(providerId: number) {
     throw new NotFoundError("Prestador no encontrado");
   }
 
-  const [usuario, serviciosOfrecidos, matriculaVigente] = await Promise.all([
+  const [usuario, zonaRow, serviciosOfrecidos, matriculaVigente, trabajosRecientes, resenasRecientes] = await Promise.all([
     db.query.usuarios.findFirst({ where: eq(usuarios.id, profesional.idUsuario) }),
+    db
+      .select({ nombre: localidades.nombre })
+      .from(usuarios)
+      .leftJoin(codigosXLocalidad, eq(codigosXLocalidad.id, usuarios.idCodigoLocalidad))
+      .leftJoin(localidades, eq(localidades.id, codigosXLocalidad.idLocalidad))
+      .where(eq(usuarios.id, profesional.idUsuario))
+      .then((rows) => rows[0]),
     db
       .select({ id: servicios.id, nombre: servicios.nombre, monto: serviciosXProfesional.monto })
       .from(serviciosXProfesional)
@@ -134,14 +144,38 @@ export async function getProviderPublicProfile(providerId: number) {
       .from(matriculasXProfesional)
       .innerJoin(matriculas, eq(matriculas.id, matriculasXProfesional.idMatricula))
       .where(eq(matriculasXProfesional.idProf, profesional.id)),
+    db
+      .select({ fecha: pedidos.fecha })
+      .from(pedidos)
+      .where(and(eq(pedidos.idProf, profesional.id), eq(pedidos.estado, "finalizado")))
+      .orderBy(desc(pedidos.fecha))
+      .limit(3),
+    db
+      .select({
+        calificacion: calificaciones.calificacion,
+        comentario: calificaciones.comentario,
+        fecha: calificaciones.fechaCreado,
+        nombreCliente: usuarios.nombre,
+        apellidoCliente: usuarios.apellido,
+      })
+      .from(calificaciones)
+      .innerJoin(pedidos, eq(pedidos.id, calificaciones.idPedido))
+      .innerJoin(clientes, eq(clientes.id, pedidos.idCliente))
+      .innerJoin(usuarios, eq(usuarios.id, clientes.idUsuario))
+      .where(eq(pedidos.idProf, profesional.id))
+      .orderBy(desc(calificaciones.fechaCreado))
+      .limit(4),
   ]);
 
   return {
     id: profesional.id,
     nombre: usuario?.nombre,
     apellido: usuario?.apellido,
+    fotoUrl: usuario?.fotoUrl ?? null,
+    zona: zonaRow?.nombre ?? null,
     descripcion: profesional.descripcion,
     aniosExperiencia: profesional.aniosExperiencia,
+    aceptaRadioKm: profesional.aceptaRadioKm,
     verificado: profesional.verificado,
     disponibilidad: profesional.disponibilidad,
     trabajosFinalizados: profesional.trabajosFinalizados,
@@ -149,6 +183,13 @@ export async function getProviderPublicProfile(providerId: number) {
     cantidadCalificaciones: profesional.cantidadCalificaciones,
     servicios: serviciosOfrecidos,
     matriculas: matriculaVigente,
+    trabajos: trabajosRecientes,
+    resenas: resenasRecientes.map((r) => ({
+      autor: `${r.nombreCliente} ${r.apellidoCliente?.[0] ?? ""}.`,
+      calificacion: r.calificacion,
+      comentario: r.comentario,
+      fecha: r.fecha,
+    })),
   };
 }
 
