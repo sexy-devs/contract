@@ -53,6 +53,8 @@ export function validatePersonalData(data: PersonalData) {
     errors.contrasena = "La contraseña debe tener al menos 8 caracteres.";
   else if (data.contrasena.length > 72)
     errors.contrasena = "La contraseña no puede superar los 72 caracteres.";
+  else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(data.contrasena))
+    errors.contrasena = "Debe incluir al menos una letra y un número.";
 
   if (!telefono) errors.telefono = "Ingresá un teléfono.";
   else if (telefono.length > 30)
@@ -91,8 +93,10 @@ export function validateLocation(data: LocationData) {
 export function validateProfessionalInfo(data: ProfessionalInfoData) {
   const errors: FieldErrors<ProfessionalInfoData> = {};
   const years = Number(data.aniosExperiencia);
+  const descripcion = data.descripcion.trim();
 
-  if (data.descripcion.trim().length > 500)
+  if (!descripcion) errors.descripcion = "Ingresá una descripción profesional.";
+  else if (descripcion.length > 500)
     errors.descripcion = "La descripción no puede superar los 500 caracteres.";
 
   if (data.aniosExperiencia === "")
@@ -106,8 +110,11 @@ export function validateProfessionalInfo(data: ProfessionalInfoData) {
 export function validateCoverage(data: CoverageData) {
   const errors: FieldErrors<CoverageData> = {};
   const radius = Number(data.aceptaRadioKm);
+  const ciudad = data.ciudad.trim();
+  const disponibilidad = data.disponibilidad.trim();
 
-  if (data.ciudad.trim().length > 100)
+  if (!ciudad) errors.ciudad = "Ingresá tu ciudad.";
+  else if (ciudad.length > 100)
     errors.ciudad = "La ciudad no puede superar los 100 caracteres.";
 
   if (data.aceptaRadioKm === "")
@@ -115,9 +122,9 @@ export function validateCoverage(data: CoverageData) {
   else if (!Number.isInteger(radius) || radius < 0 || radius > 200)
     errors.aceptaRadioKm = "Ingresá un número entero entre 0 y 200 km.";
 
-  if (data.disponibilidad.trim().length > 200)
-    errors.disponibilidad =
-      "La disponibilidad no puede superar los 200 caracteres.";
+  if (!disponibilidad) errors.disponibilidad = "Ingresá tu disponibilidad.";
+  else if (disponibilidad.length > 200)
+    errors.disponibilidad = "La disponibilidad no puede superar los 200 caracteres.";
 
   return errors;
 }
@@ -135,8 +142,8 @@ export function validateServices(data: OfferedServiceData[]) {
     else selectedIds.add(service.idServ);
 
     if (service.monto === "") errors.monto = "Ingresá un monto.";
-    else if (!Number.isInteger(amount) || amount < 0)
-      errors.monto = "Ingresá un monto entero mayor o igual a 0.";
+    else if (!Number.isInteger(amount) || amount <= 0)
+      errors.monto = "Ingresá un monto entero mayor a 0.";
 
     return errors;
   });

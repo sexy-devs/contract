@@ -1,62 +1,57 @@
-export type LoginPayload = { email: string; password: string };
-export type RegisterRole = "cliente" | "profesional";
+import { apiClient } from "../../../lib/api";
 
-export type RegisterPayload = {
+export type LoginPayload = { email: string; password: string };
+
+type BaseRegisterPayload = {
   nombre: string;
   apellido: string;
   email: string;
-  contrasena: string;
+  password: string;
   telefono: string;
-  rol: RegisterRole;
 };
 
-export type AuthResponse = {
-  token: string;
-  usuario: {
-    id: number;
-    email: string;
-    rol: RegisterRole | "admin";
-  };
+export type RegisterClientePayload = BaseRegisterPayload & {
+  rol: "cliente";
+  direccion?: string;
+  ciudad?: string;
+  codigoPostal?: string;
 };
 
-export type LoginResponse = AuthResponse;
+export type RegisterProfesionalPayload = BaseRegisterPayload & {
+  rol: "profesional";
+  descripcion: string;
+  aniosExperiencia: number;
+  ciudad: string;
+  aceptaRadioKm: number;
+  disponibilidad: string;
+  servicios: { idServ: number; monto: number }[];
+};
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+export type RegisterPayload = RegisterClientePayload | RegisterProfesionalPayload;
 
-export async function register(
-  payload: RegisterPayload,
-): Promise<AuthResponse> {
-  const response = await fetch(`${API_URL}/api/auth/registro`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+export type AuthUser = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  fotoUrl: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  codigoPostal: string | null;
+  rol: "cliente" | "profesional" | "admin";
+};
+
+export type AuthResponse = { token: string; usuario: AuthUser };
+
+export function login(payload: LoginPayload): Promise<AuthResponse> {
+  return apiClient.post<AuthResponse>("/auth/login", {
+    email: payload.email,
+    contrasena: payload.password,
   });
-
-  if (!response.ok) {
-    const body: { error?: unknown } = await response.json().catch(() => ({}));
-    const message =
-      typeof body.error === "string"
-        ? body.error
-        : "No se pudo crear la cuenta.";
-    throw new Error(message);
-  }
-
-  return response.json();
 }
 
-export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: payload.email,
-      contrasena: payload.password,
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Fallo al iniciar sesión, credenciales inválidas");
-  }
-  return res.json();
+export function register(payload: RegisterPayload): Promise<AuthResponse> {
+  const { password, ...rest } = payload;
+  return apiClient.post<AuthResponse>("/auth/registro", { ...rest, contrasena: password });
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { listServicios, type ServicioCatalogo } from "../../catalog/api/catalogApi";
 import AccountTypeSelector, {
   type AccountType,
 } from "../components/AccountTypeSelector";
@@ -22,14 +23,6 @@ import ServicesStep, {
 } from "../components/ServicesStep";
 import DocumentationStep from "../components/DocumentationStep";
 import { useRegister } from "../hooks/useRegister";
-import {
-  replaceProfessionalServices,
-  updateProfessionalProfile,
-} from "../api/providerRegistrationApi";
-import {
-  listServices,
-  type ServiceOption,
-} from "../../catalog/api/catalogApi";
 import {
   hasFieldErrors,
   hasServiceErrors,
@@ -77,7 +70,6 @@ function Register() {
     loading: registrationLoading,
     error: registrationError,
     clearError: clearRegistrationError,
-    accountCreated,
   } = useRegister();
   const [accountType, setAccountType] = useState<AccountType>("cliente");
   const [currentStep, setCurrentStep] = useState(1);
@@ -91,6 +83,9 @@ function Register() {
     useState<CoverageData>(initialCoverageData);
   const [services, setServices] =
     useState<OfferedServiceData[]>(initialServices);
+  const [catalogo, setCatalogo] = useState<ServicioCatalogo[]>([]);
+  const [catalogoLoading, setCatalogoLoading] = useState(true);
+  const [catalogoError, setCatalogoError] = useState("");
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
   const [personalErrors, setPersonalErrors] =
     useState<FieldErrors<PersonalData>>({});
@@ -102,35 +97,30 @@ function Register() {
     useState<FieldErrors<CoverageData>>({});
   const [serviceErrors, setServiceErrors] = useState<ServiceRowError[]>([]);
   const [documentationError, setDocumentationError] = useState("");
-  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
-  const [servicesLoading, setServicesLoading] = useState(true);
-  const [servicesCatalogError, setServicesCatalogError] = useState("");
-
-  const isClientFinalStep = accountType === "cliente" && currentStep === 3;
-  const isProfessionalFinalStep =
-    accountType === "profesional" && currentStep === 6;
-  const isFinalStep = isClientFinalStep || isProfessionalFinalStep;
 
   useEffect(() => {
     let cancelled = false;
 
-    listServices()
+    listServicios()
       .then((options) => {
-        if (!cancelled) setServiceOptions(options);
+        if (!cancelled) setCatalogo(options);
       })
       .catch(() => {
-        if (!cancelled) {
-          setServicesCatalogError("No se pudo cargar el catálogo de servicios.");
-        }
+        if (!cancelled) setCatalogoError("No se pudo cargar el catálogo de servicios.");
       })
       .finally(() => {
-        if (!cancelled) setServicesLoading(false);
+        if (!cancelled) setCatalogoLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const isClientFinalStep = accountType === "cliente" && currentStep === 3;
+  const isProfessionalFinalStep =
+    accountType === "profesional" && currentStep === 6;
+  const isFinalStep = isClientFinalStep || isProfessionalFinalStep;
 
   async function handleContinue() {
     if (registrationLoading) return;
@@ -154,14 +144,20 @@ function Register() {
       setLocationErrors(errors);
       if (hasFieldErrors(errors)) return;
 
-      await submitRegistration({
-        nombre: personalData.nombre.trim(),
-        apellido: personalData.apellido.trim(),
-        email: personalData.email.trim(),
-        contrasena: personalData.contrasena,
-        telefono: personalData.telefono.trim(),
-        rol: accountType,
-      });
+      await submitRegistration(
+        {
+          nombre: personalData.nombre.trim(),
+          apellido: personalData.apellido.trim(),
+          email: personalData.email.trim(),
+          password: personalData.contrasena,
+          telefono: personalData.telefono.trim(),
+          rol: "cliente",
+          direccion: locationData.direccion.trim() || undefined,
+          ciudad: locationData.ciudad.trim() || undefined,
+          codigoPostal: locationData.codigoPostal.trim() || undefined,
+        },
+        { fotoPerfil: personalData.fotoPerfil },
+      );
       return;
     }
 
@@ -202,27 +198,20 @@ function Register() {
           nombre: personalData.nombre.trim(),
           apellido: personalData.apellido.trim(),
           email: personalData.email.trim(),
-          contrasena: personalData.contrasena,
+          password: personalData.contrasena,
           telefono: personalData.telefono.trim(),
-          rol: accountType,
+          rol: "profesional",
+          descripcion: professionalInfo.descripcion.trim(),
+          aniosExperiencia: Number(professionalInfo.aniosExperiencia),
+          ciudad: coverageData.ciudad.trim(),
+          aceptaRadioKm: Number(coverageData.aceptaRadioKm),
+          disponibilidad: coverageData.disponibilidad.trim(),
+          servicios: services.map((servicio) => ({
+            idServ: Number(servicio.idServ),
+            monto: Number(servicio.monto),
+          })),
         },
-        async (token) => {
-          await Promise.all([
-            updateProfessionalProfile(token, {
-              descripcion: professionalInfo.descripcion.trim() || undefined,
-              aniosExperiencia: Number(professionalInfo.aniosExperiencia),
-              aceptaRadioKm: Number(coverageData.aceptaRadioKm),
-              disponibilidad: coverageData.disponibilidad.trim() || undefined,
-            }),
-            replaceProfessionalServices(
-              token,
-              services.map((service) => ({
-                idServ: Number(service.idServ),
-                monto: Number(service.monto),
-              })),
-            ),
-          ]);
-        },
+        { fotoPerfil: personalData.fotoPerfil, documentacion: documentationFile },
       );
     }
   }
@@ -386,9 +375,9 @@ function Register() {
               <ServicesStep
                 data={services}
                 errors={serviceErrors}
-                options={serviceOptions}
-                loadingOptions={servicesLoading}
-                catalogError={servicesCatalogError}
+                options={catalogo}
+                loadingOptions={catalogoLoading}
+                catalogError={catalogoError}
                 onChange={handleServicesChange}
               />
             ) : (
@@ -406,7 +395,7 @@ function Register() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  disabled={registrationLoading || accountCreated}
+                  disabled={registrationLoading}
                   className="rounded-lg border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Atrás
@@ -420,11 +409,7 @@ function Register() {
                 className="flex-1 rounded-lg bg-sky-800 px-4 py-3 font-semibold text-white hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isFinalStep && registrationLoading
-                  ? accountCreated
-                    ? "Completando perfil..."
-                    : "Creando cuenta..."
-                  : isFinalStep && accountCreated
-                    ? "Reintentar configuración"
+                  ? "Creando cuenta..."
                   : isFinalStep
                     ? "Registrarse"
                     : "Continuar"}

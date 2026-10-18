@@ -21,7 +21,6 @@ export const replaceServicesSchema = z.object({
 export type ReplaceServicesInput = z.infer<typeof replaceServicesSchema>;
 
 export const createMatriculaSchema = z.object({
-  fotoUrl: z.string().trim().url().max(500),
   fechaExpiracion: z.string().trim().date().optional(),
 });
 

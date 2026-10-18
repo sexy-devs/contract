@@ -1,4 +1,4 @@
-import type { ServiceOption } from "../../catalog/api/catalogApi";
+import type { ServicioCatalogo } from "../../catalog/api/catalogApi";
 
 export type OfferedServiceData = {
   idServ: string;
@@ -8,7 +8,7 @@ export type OfferedServiceData = {
 type Props = {
   data: OfferedServiceData[];
   errors: Array<Partial<Record<keyof OfferedServiceData, string>>>;
-  options: ServiceOption[];
+  options: ServicioCatalogo[];
   loadingOptions: boolean;
   catalogError: string;
   onChange: (services: OfferedServiceData[]) => void;

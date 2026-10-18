@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { login, type LoginPayload } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
+import { ApiError } from "../../../lib/api";
+import { login, type LoginPayload } from "../api/authApi";
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -14,10 +15,10 @@ export function useLogin() {
     try {
       const data = await login(payload);
       localStorage.setItem("token", data.token);
-      navigate('/catalogo');
+      navigate("/catalogo");
       return data;
-    } catch {
-      setError("Credenciales inválidas.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo conectar con el servidor.");
       return;
     } finally {
       setLoading(false);

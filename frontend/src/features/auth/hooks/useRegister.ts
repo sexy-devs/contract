@@ -1,57 +1,46 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ApiError } from "../../../lib/api";
+import { uploadMyMatricula } from "../../providers/api/providerProfileApi";
+import { updateMyPhoto } from "../../profile/api/usersApi";
+import { register, type RegisterPayload } from "../api/authApi";
 
-import {
-  register,
-  type RegisterPayload,
-} from "../api/authApi";
+type SubmitExtras = { fotoPerfil?: File | null; documentacion?: File | null };
 
 export function useRegister() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [createdToken, setCreatedToken] = useState<string | null>(null);
 
-  async function submit(
-    payload: RegisterPayload,
-    afterRegister?: (token: string) => Promise<void>,
-  ) {
+  async function submit(payload: RegisterPayload, extras: SubmitExtras = {}) {
     setLoading(true);
     setError(null);
 
     try {
-      let token = createdToken;
+      const data = await register(payload);
+      localStorage.setItem("token", data.token);
 
-      if (!token) {
-        const data = await register(payload);
-        token = data.token;
-        localStorage.setItem("token", token);
-        setCreatedToken(token);
-      }
-
-      if (afterRegister) {
+      if (extras.fotoPerfil) {
         try {
-          await afterRegister(token);
-        } catch (setupError) {
-          const detail =
-            setupError instanceof Error ? setupError.message : "Error desconocido";
-          throw new Error(
-            `La cuenta fue creada, pero faltó completar el perfil: ${detail}`,
-            { cause: setupError },
-          );
+          await updateMyPhoto(extras.fotoPerfil);
+        } catch {
+          // la cuenta ya se creó; la foto se puede cambiar después desde el perfil
         }
       }
 
-      setCreatedToken(null);
+      if (payload.rol === "profesional" && extras.documentacion) {
+        try {
+          await uploadMyMatricula(extras.documentacion);
+        } catch {
+          // la cuenta ya se creó; la matrícula se puede cargar después desde el perfil
+        }
+      }
+
       navigate("/catalogo");
-      return true;
+      return data;
     } catch (requestError) {
-      const message =
-        requestError instanceof Error
-          ? requestError.message
-          : "No se pudo crear la cuenta.";
-      setError(message);
-      return false;
+      setError(requestError instanceof ApiError ? requestError.message : "No se pudo crear la cuenta.");
+      return undefined;
     } finally {
       setLoading(false);
     }
@@ -61,11 +50,5 @@ export function useRegister() {
     setError(null);
   }
 
-  return {
-    submit,
-    loading,
-    error,
-    clearError,
-    accountCreated: Boolean(createdToken),
-  };
+  return { submit, loading, error, clearError };
 }

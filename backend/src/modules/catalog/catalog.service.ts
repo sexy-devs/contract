@@ -32,6 +32,11 @@ function buildFilters(input: Pick<SearchProvidersInput, "servicio" | "zona" | "s
   return conditions.length > 0 ? and(...conditions) : undefined;
 }
 
+function resolveDirection(ordenarPor: SearchProvidersInput["ordenarPor"], explicit?: "asc" | "desc") {
+  if (explicit) return explicit;
+  return ordenarPor === "calificacion" ? "desc" : "asc";
+}
+
 function distanciaKmExpr(lat: number, lng: number) {
   return sql<number | null>`
     case when ${usuarios.latitud} is null or ${usuarios.longitud} is null then null else
@@ -77,12 +82,15 @@ export async function searchProviders(input: SearchProvidersInput) {
     .where(whereClause)
     .groupBy(profesionales.id, usuarios.id, localidades.id);
 
+  const direction = resolveDirection(input.ordenarPor, input.orden);
+  const directionSql = sql.raw(direction);
+
   const orderedQuery =
     input.ordenarPor === "precio"
-      ? baseQuery.orderBy(sql`min(${serviciosXProfesional.monto}) asc nulls last`)
+      ? baseQuery.orderBy(sql`min(${serviciosXProfesional.monto}) ${directionSql} nulls last`)
       : input.ordenarPor === "distancia" && hasOrigin
-        ? baseQuery.orderBy(sql`${distanciaKmExpr(input.lat as number, input.lng as number)} asc nulls last`)
-        : baseQuery.orderBy(sql`${profesionales.calificacionGlobal} desc`);
+        ? baseQuery.orderBy(sql`${distanciaKmExpr(input.lat as number, input.lng as number)} ${directionSql} nulls last`)
+        : baseQuery.orderBy(sql`${profesionales.calificacionGlobal} ${directionSql}`);
 
   const [rows, [{ total } = { total: 0 }]] = await Promise.all([
     orderedQuery.limit(input.limit).offset(offset),
@@ -101,6 +109,10 @@ export async function searchProviders(input: SearchProvidersInput) {
     data: rows,
     pagination: { page: input.page, limit: input.limit, total },
   };
+}
+
+export async function listServicios() {
+  return db.select({ id: servicios.id, nombre: servicios.nombre }).from(servicios).orderBy(servicios.nombre);
 }
 
 export async function getProviderPublicProfile(providerId: number) {
@@ -145,11 +157,4 @@ export async function listZones() {
     .select({ id: localidades.id, nombre: localidades.nombre })
     .from(localidades)
     .orderBy(localidades.nombre);
-}
-
-export async function listServices() {
-  return db
-    .select({ id: servicios.id, nombre: servicios.nombre })
-    .from(servicios)
-    .orderBy(servicios.nombre);
 }

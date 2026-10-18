@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "7",
+      "when": 1792269977130,
+      "tag": "0002_rare_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
       "when": 1792275749657,
-      "tag": "0002_seed_services",
+      "tag": "0003_seed_services",
       "breakpoints": true
     }
   ]

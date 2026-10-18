@@ -8,6 +8,7 @@ export const searchProvidersSchema = z.object({
     .optional()
     .transform((value) => value === "true"),
   ordenarPor: z.enum(["calificacion", "precio", "distancia"]).optional().default("calificacion"),
+  orden: z.enum(["asc", "desc"]).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   page: z.coerce.number().int().min(1).optional().default(1),

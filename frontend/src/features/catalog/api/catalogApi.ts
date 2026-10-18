@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+import { apiClient } from "../../../lib/api";
 
 export type ProviderRow = {
   id: number;
@@ -14,46 +14,40 @@ export type ProviderRow = {
   precioDesde: string | number | null;
 };
 
-export type ServiceOption = {
-  id: number;
-  nombre: string;
+export type SearchProvidersResponse = {
+  data: ProviderRow[];
+  pagination: { page: number; limit: number; total: number };
 };
 
-let servicesRequest: Promise<ServiceOption[]> | null = null;
+export type ProviderPublicProfile = {
+  id: number;
+  nombre: string | undefined;
+  apellido: string | undefined;
+  descripcion: string | null;
+  aniosExperiencia: number;
+  verificado: boolean;
+  disponibilidad: string | null;
+  trabajosFinalizados: number;
+  calificacionGlobal: number;
+  cantidadCalificaciones: number;
+  servicios: { id: number; nombre: string; monto: number }[];
+  matriculas: { estado: string; fechaExpiracion: string | null }[];
+};
 
-export async function listZones(): Promise<{ id: number; nombre: string }[]> {
-  const res = await fetch(`${API_URL}/api/catalogo/zonas`);
-  if (!res.ok) throw new Error("No se pudieron cargar las zonas");
-  return res.json();
+export type ServicioCatalogo = { id: number; nombre: string };
+
+export function listServicios(): Promise<ServicioCatalogo[]> {
+  return apiClient.get<ServicioCatalogo[]>("/catalogo/servicios");
 }
 
-export function listServices(): Promise<ServiceOption[]> {
-  if (!servicesRequest) {
-    servicesRequest = fetch(`${API_URL}/api/catalogo/servicios`).then(
-      async (response) => {
-        if (!response.ok) {
-          throw new Error("No se pudieron cargar los servicios");
-        }
-        return response.json() as Promise<ServiceOption[]>;
-      },
-    ).catch((error) => {
-      servicesRequest = null;
-      throw error;
-    });
-  }
-
-  return servicesRequest;
+export function listZones(): Promise<{ id: number; nombre: string }[]> {
+  return apiClient.get<{ id: number; nombre: string }[]>("/catalogo/zonas");
 }
 
-export async function searchProviders(params = "") {
-  // fetch de datos para el populate del catálogo
-  const res = await fetch(`${API_URL}/api/catalogo/profesionales${params}`);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "No se pudo cargar el catálogo");
-  }
-  return res.json() as Promise<{
-    data: ProviderRow[];
-    pagination: { page: number; limit: number; total: number };
-  }>;
+export function searchProviders(params = ""): Promise<SearchProvidersResponse> {
+  return apiClient.get<SearchProvidersResponse>(`/catalogo/profesionales${params}`);
+}
+
+export function getProviderPublicProfile(id: number): Promise<ProviderPublicProfile> {
+  return apiClient.get<ProviderPublicProfile>(`/catalogo/profesionales/${id}`);
 }
