@@ -1,16 +1,293 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { listServicios, type ServicioCatalogo } from "../../catalog/api/catalogApi";
 import AccountTypeSelector, {
   type AccountType,
 } from "../components/AccountTypeSelector";
 import RegistrationProgress from "../components/RegistrationProgress";
 import LogoContract from "../../../components/layout/LogoContract";
+import PersonalDataStep, {
+  type PersonalData,
+} from "../components/PersonalDataStep";
+import LocationStep, {
+  type LocationData,
+} from "../components/LocationStep";
+import ProfessionalInfoStep, {
+  type ProfessionalInfoData,
+} from "../components/ProfessionalInfoStep";
+import CoverageAvailabilityStep, {
+  type CoverageData,
+} from "../components/CoverageAvailabilityStep";
+import ServicesStep, {
+  type OfferedServiceData,
+} from "../components/ServicesStep";
+import DocumentationStep from "../components/DocumentationStep";
+import { useRegister } from "../hooks/useRegister";
+import {
+  hasFieldErrors,
+  hasServiceErrors,
+  validateCoverage,
+  validateDocumentation,
+  validateLocation,
+  validatePersonalData,
+  validateProfessionalInfo,
+  validateServices,
+  type FieldErrors,
+  type ServiceRowError,
+} from "../registrationValidation";
+
+const initialPersonalData: PersonalData = {
+  nombre: "",
+  apellido: "",
+  email: "",
+  contrasena: "",
+  telefono: "",
+  fotoPerfil: null,
+};
+
+const initialLocationData: LocationData = {
+  direccion: "",
+  ciudad: "",
+  codigoPostal: "",
+};
+
+const initialProfessionalInfo: ProfessionalInfoData = {
+  descripcion: "",
+  aniosExperiencia: "0",
+};
+
+const initialCoverageData: CoverageData = {
+  ciudad: "",
+  aceptaRadioKm: "0",
+  disponibilidad: "",
+};
+
+const initialServices: OfferedServiceData[] = [{ idServ: "", monto: "0" }];
 
 function Register() {
+  const {
+    submit: submitRegistration,
+    loading: registrationLoading,
+    error: registrationError,
+    clearError: clearRegistrationError,
+  } = useRegister();
   const [accountType, setAccountType] = useState<AccountType>("cliente");
+  const [currentStep, setCurrentStep] = useState(1);
+  const [personalData, setPersonalData] =
+    useState<PersonalData>(initialPersonalData);
+  const [locationData, setLocationData] =
+    useState<LocationData>(initialLocationData);
+  const [professionalInfo, setProfessionalInfo] =
+    useState<ProfessionalInfoData>(initialProfessionalInfo);
+  const [coverageData, setCoverageData] =
+    useState<CoverageData>(initialCoverageData);
+  const [services, setServices] =
+    useState<OfferedServiceData[]>(initialServices);
+  const [catalogo, setCatalogo] = useState<ServicioCatalogo[]>([]);
+  const [documentationFile, setDocumentationFile] = useState<File | null>(null);
+  const [personalErrors, setPersonalErrors] =
+    useState<FieldErrors<PersonalData>>({});
+  const [locationErrors, setLocationErrors] =
+    useState<FieldErrors<LocationData>>({});
+  const [professionalInfoErrors, setProfessionalInfoErrors] =
+    useState<FieldErrors<ProfessionalInfoData>>({});
+  const [coverageErrors, setCoverageErrors] =
+    useState<FieldErrors<CoverageData>>({});
+  const [serviceErrors, setServiceErrors] = useState<ServiceRowError[]>([]);
+  const [documentationError, setDocumentationError] = useState("");
 
-  function handleContinue() {
-    console.log("Continuar registro como:", accountType);
+  useEffect(() => {
+    listServicios()
+      .then(setCatalogo)
+      .catch(() => {
+        // el paso de servicios simplemente queda sin opciones para elegir
+      });
+  }, []);
+
+  const isClientFinalStep = accountType === "cliente" && currentStep === 3;
+  const isProfessionalFinalStep =
+    accountType === "profesional" && currentStep === 6;
+  const isFinalStep = isClientFinalStep || isProfessionalFinalStep;
+
+  async function handleContinue() {
+    if (registrationLoading) return;
+
+    if (currentStep === 1) {
+      setCurrentStep(2);
+      return;
+    }
+
+    if (currentStep === 2) {
+      const errors = validatePersonalData(personalData);
+      setPersonalErrors(errors);
+      if (hasFieldErrors(errors)) return;
+
+      setCurrentStep(3);
+      return;
+    }
+
+    if (accountType === "cliente" && currentStep === 3) {
+      const errors = validateLocation(locationData);
+      setLocationErrors(errors);
+      if (hasFieldErrors(errors)) return;
+
+      await submitRegistration(
+        {
+          nombre: personalData.nombre.trim(),
+          apellido: personalData.apellido.trim(),
+          email: personalData.email.trim(),
+          password: personalData.contrasena,
+          telefono: personalData.telefono.trim(),
+          rol: "cliente",
+          direccion: locationData.direccion.trim() || undefined,
+          ciudad: locationData.ciudad.trim() || undefined,
+          codigoPostal: locationData.codigoPostal.trim() || undefined,
+        },
+        { fotoPerfil: personalData.fotoPerfil },
+      );
+      return;
+    }
+
+    if (accountType === "profesional" && currentStep === 3) {
+      const errors = validateProfessionalInfo(professionalInfo);
+      setProfessionalInfoErrors(errors);
+      if (hasFieldErrors(errors)) return;
+
+      setCurrentStep(4);
+      return;
+    }
+
+    if (accountType === "profesional" && currentStep === 4) {
+      const errors = validateCoverage(coverageData);
+      setCoverageErrors(errors);
+      if (hasFieldErrors(errors)) return;
+
+      setCurrentStep(5);
+      return;
+    }
+
+    if (accountType === "profesional" && currentStep === 5) {
+      const errors = validateServices(services);
+      setServiceErrors(errors);
+      if (hasServiceErrors(errors)) return;
+
+      setCurrentStep(6);
+      return;
+    }
+
+    if (accountType === "profesional" && currentStep === 6) {
+      const error = validateDocumentation(documentationFile);
+      setDocumentationError(error);
+      if (error) return;
+
+      await submitRegistration(
+        {
+          nombre: personalData.nombre.trim(),
+          apellido: personalData.apellido.trim(),
+          email: personalData.email.trim(),
+          password: personalData.contrasena,
+          telefono: personalData.telefono.trim(),
+          rol: "profesional",
+          descripcion: professionalInfo.descripcion.trim(),
+          aniosExperiencia: Number(professionalInfo.aniosExperiencia),
+          ciudad: coverageData.ciudad.trim(),
+          aceptaRadioKm: Number(coverageData.aceptaRadioKm),
+          disponibilidad: coverageData.disponibilidad.trim(),
+          servicios: services.map((servicio) => ({
+            idServ: Number(servicio.idServ),
+            monto: Number(servicio.monto),
+          })),
+        },
+        { fotoPerfil: personalData.fotoPerfil, documentacion: documentationFile },
+      );
+    }
+  }
+
+  function handleBack() {
+    setCurrentStep((step) => Math.max(1, step - 1));
+  }
+
+  function handleAccountTypeChange(nextAccountType: AccountType) {
+    if (nextAccountType === accountType) return;
+
+    if (nextAccountType === "profesional") {
+      setLocationData(initialLocationData);
+      setLocationErrors({});
+    } else {
+      setProfessionalInfo(initialProfessionalInfo);
+      setCoverageData(initialCoverageData);
+      setServices(initialServices);
+      setDocumentationFile(null);
+      setProfessionalInfoErrors({});
+      setCoverageErrors({});
+      setServiceErrors([]);
+      setDocumentationError("");
+    }
+
+    setAccountType(nextAccountType);
+    clearRegistrationError();
+  }
+
+  function handlePersonalDataChange(
+    field: Exclude<keyof PersonalData, "fotoPerfil">,
+    value: string,
+  ) {
+    setPersonalData((data) => ({ ...data, [field]: value }));
+    clearRegistrationError();
+    setPersonalErrors((errors) => {
+      const nextErrors = { ...errors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function handlePhotoChange(file: File | null) {
+    setPersonalData((data) => ({ ...data, fotoPerfil: file }));
+    setPersonalErrors((errors) => {
+      const nextErrors = { ...errors };
+      delete nextErrors.fotoPerfil;
+      return nextErrors;
+    });
+  }
+
+  function handleLocationChange(field: keyof LocationData, value: string) {
+    setLocationData((data) => ({ ...data, [field]: value }));
+    setLocationErrors((errors) => {
+      const nextErrors = { ...errors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function handleProfessionalInfoChange(
+    field: keyof ProfessionalInfoData,
+    value: string,
+  ) {
+    setProfessionalInfo((data) => ({ ...data, [field]: value }));
+    setProfessionalInfoErrors((errors) => {
+      const nextErrors = { ...errors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function handleCoverageChange(field: keyof CoverageData, value: string) {
+    setCoverageData((data) => ({ ...data, [field]: value }));
+    setCoverageErrors((errors) => {
+      const nextErrors = { ...errors };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function handleServicesChange(updatedServices: OfferedServiceData[]) {
+    setServices(updatedServices);
+    setServiceErrors([]);
+  }
+
+  function handleDocumentationChange(file: File | null) {
+    setDocumentationFile(file);
+    setDocumentationError("");
   }
 
   return (
@@ -41,21 +318,91 @@ function Register() {
           </header>
 
           <div className="mt-7">
-            <RegistrationProgress accountType={accountType} currentStep={1} />
+            <RegistrationProgress
+              accountType={accountType}
+              currentStep={currentStep}
+            />
           </div>
 
           <div className="mt-7">
-            <AccountTypeSelector value={accountType} onChange={setAccountType} />
+            {currentStep === 1 ? (
+              <AccountTypeSelector
+                value={accountType}
+                onChange={handleAccountTypeChange}
+              />
+            ) : currentStep === 2 ? (
+              <PersonalDataStep
+                data={personalData}
+                errors={personalErrors}
+                onChange={handlePersonalDataChange}
+                onPhotoChange={handlePhotoChange}
+              />
+            ) : accountType === "cliente" ? (
+              <LocationStep
+                data={locationData}
+                errors={locationErrors}
+                onChange={handleLocationChange}
+              />
+            ) : currentStep === 3 ? (
+              <ProfessionalInfoStep
+                data={professionalInfo}
+                errors={professionalInfoErrors}
+                onChange={handleProfessionalInfoChange}
+              />
+            ) : currentStep === 4 ? (
+              <CoverageAvailabilityStep
+                data={coverageData}
+                errors={coverageErrors}
+                onChange={handleCoverageChange}
+              />
+            ) : currentStep === 5 ? (
+              <ServicesStep
+                data={services}
+                errors={serviceErrors}
+                catalogo={catalogo}
+                onChange={handleServicesChange}
+              />
+            ) : (
+              <DocumentationStep
+                file={documentationFile}
+                validationError={documentationError}
+                onChange={handleDocumentationChange}
+              />
+            )}
           </div>
 
           <div className="mt-6 border-t border-gray-200 pt-5">
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="w-full rounded-lg bg-sky-800 px-4 py-3 font-semibold text-white hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800"
-            >
-              Continuar
-            </button>
+            <div className="flex gap-3">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={registrationLoading}
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Atrás
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleContinue}
+                disabled={registrationLoading}
+                className="flex-1 rounded-lg bg-sky-800 px-4 py-3 font-semibold text-white hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isFinalStep && registrationLoading
+                  ? "Creando cuenta..."
+                  : isFinalStep
+                    ? "Registrarse"
+                    : "Continuar"}
+              </button>
+            </div>
+
+            {registrationError && (
+              <p role="alert" className="mt-3 text-center text-sm text-red-600">
+                {registrationError}
+              </p>
+            )}
 
             <p className="mt-4 text-center text-sm text-gray-600">
               ¿Ya tenés una cuenta?{" "}

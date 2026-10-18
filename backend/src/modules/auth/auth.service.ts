@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "../../database/client";
-import { clientes, profesionales, usuarios } from "../../database/schema";
-import { ConflictError, UnauthorizedError } from "../../shared/errors/AppError";
+import { clientes, profesionales, servicios, serviciosXProfesional, usuarios } from "../../database/schema";
+import { ConflictError, UnauthorizedError, ValidationError } from "../../shared/errors/AppError";
 import { comparePassword, hashPassword } from "../../shared/utils/password";
 import { signToken } from "../../shared/utils/jwt";
 import type { LoginInput, RegisterInput } from "./auth.validation";
@@ -12,6 +12,15 @@ export async function register(input: RegisterInput) {
 
   if (existing) {
     throw new ConflictError("El email ya se encuentra registrado");
+  }
+
+  if (input.rol === "profesional") {
+    const idsServ = [...new Set(input.servicios.map((servicio) => servicio.idServ))];
+    const existentes = await db.select({ id: servicios.id }).from(servicios).where(inArray(servicios.id, idsServ));
+
+    if (existentes.length !== idsServ.length) {
+      throw new ValidationError("Alguno de los servicios seleccionados no existe");
+    }
   }
 
   const contrasenaHash = await hashPassword(input.contrasena);
@@ -26,6 +35,9 @@ export async function register(input: RegisterInput) {
         contrasena: contrasenaHash,
         telefono: input.telefono,
         rol: input.rol,
+        ciudad: input.ciudad,
+        direccion: input.rol === "cliente" ? input.direccion : undefined,
+        codigoPostal: input.rol === "cliente" ? input.codigoPostal : undefined,
         estadoRegistro: "activo",
       })
       .returning();
@@ -36,8 +48,25 @@ export async function register(input: RegisterInput) {
 
     if (input.rol === "cliente") {
       await tx.insert(clientes).values({ idUsuario: created.id });
-    } else if (input.rol === "profesional") {
-      await tx.insert(profesionales).values({ idUsuario: created.id });
+    } else {
+      const [profesional] = await tx
+        .insert(profesionales)
+        .values({
+          idUsuario: created.id,
+          descripcion: input.descripcion,
+          aniosExperiencia: input.aniosExperiencia,
+          aceptaRadioKm: input.aceptaRadioKm,
+          disponibilidad: input.disponibilidad,
+        })
+        .returning();
+
+      if (!profesional) {
+        throw new Error("No se pudo crear el perfil profesional");
+      }
+
+      await tx
+        .insert(serviciosXProfesional)
+        .values(input.servicios.map((servicio) => ({ idProf: profesional.id, idServ: servicio.idServ, monto: servicio.monto })));
     }
 
     return created;

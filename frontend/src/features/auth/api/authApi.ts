@@ -2,14 +2,32 @@ import { apiClient } from "../../../lib/api";
 
 export type LoginPayload = { email: string; password: string };
 
-export type RegisterPayload = {
+type BaseRegisterPayload = {
   nombre: string;
   apellido: string;
   email: string;
   password: string;
   telefono: string;
-  rol: "cliente" | "profesional";
 };
+
+export type RegisterClientePayload = BaseRegisterPayload & {
+  rol: "cliente";
+  direccion?: string;
+  ciudad?: string;
+  codigoPostal?: string;
+};
+
+export type RegisterProfesionalPayload = BaseRegisterPayload & {
+  rol: "profesional";
+  descripcion: string;
+  aniosExperiencia: number;
+  ciudad: string;
+  aceptaRadioKm: number;
+  disponibilidad: string;
+  servicios: { idServ: number; monto: number }[];
+};
+
+export type RegisterPayload = RegisterClientePayload | RegisterProfesionalPayload;
 
 export type AuthUser = {
   id: number;
@@ -18,6 +36,9 @@ export type AuthUser = {
   email: string;
   telefono: string;
   fotoUrl: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  codigoPostal: string | null;
   rol: "cliente" | "profesional" | "admin";
 };
 
@@ -31,12 +52,6 @@ export function login(payload: LoginPayload): Promise<AuthResponse> {
 }
 
 export function register(payload: RegisterPayload): Promise<AuthResponse> {
-  return apiClient.post<AuthResponse>("/auth/registro", {
-    nombre: payload.nombre,
-    apellido: payload.apellido,
-    email: payload.email,
-    contrasena: payload.password,
-    telefono: payload.telefono,
-    rol: payload.rol,
-  });
+  const { password, ...rest } = payload;
+  return apiClient.post<AuthResponse>("/auth/registro", { ...rest, contrasena: password });
 }

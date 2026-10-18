@@ -95,3 +95,6 @@ PI2.pdf
 
 # xd
 .claude
+
+# Script de seed local, no para el repo
+seed.sh
