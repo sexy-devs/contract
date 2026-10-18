@@ -8,14 +8,23 @@ export type OfferedServiceData = {
 type Props = {
   data: OfferedServiceData[];
   errors: Array<Partial<Record<keyof OfferedServiceData, string>>>;
-  catalogo: ServicioCatalogo[];
+  options: ServicioCatalogo[];
+  loadingOptions: boolean;
+  catalogError: string;
   onChange: (services: OfferedServiceData[]) => void;
 };
 
 const fieldClass =
   "w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-sky-800";
 
-function ServicesStep({ data, errors, catalogo, onChange }: Props) {
+function ServicesStep({
+  data,
+  errors,
+  options,
+  loadingOptions,
+  catalogError,
+  onChange,
+}: Props) {
   function updateService(
     index: number,
     field: keyof OfferedServiceData,
@@ -62,6 +71,7 @@ function ServicesStep({ data, errors, catalogo, onChange }: Props) {
                 Servicio ofrecido
                 <select
                   value={service.idServ}
+                  disabled={loadingOptions || Boolean(catalogError)}
                   onChange={(event) =>
                     updateService(index, "idServ", event.target.value)
                   }
@@ -73,8 +83,10 @@ function ServicesStep({ data, errors, catalogo, onChange }: Props) {
                   }
                   className={`${fieldClass} mt-1.5 ${errors[index]?.idServ ? "border-red-500" : ""}`}
                 >
-                  <option value="">Seleccionar servicio</option>
-                  {catalogo.map((option) => (
+                  <option value="">
+                    {loadingOptions ? "Cargando servicios..." : "Seleccionar servicio"}
+                  </option>
+                  {options.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.nombre}
                     </option>
@@ -146,7 +158,15 @@ function ServicesStep({ data, errors, catalogo, onChange }: Props) {
           + Agregar servicio
         </button>
 
-        <p className="mt-2 text-sm text-gray-500">Servicios disponibles según el catálogo de oficios.</p>
+        {catalogError ? (
+          <p role="alert" className="mt-2 text-sm text-red-600">
+            {catalogError}
+          </p>
+        ) : options.length === 0 && !loadingOptions ? (
+          <p className="mt-2 text-sm text-gray-500">
+            No hay servicios disponibles en el catálogo.
+          </p>
+        ) : null}
       </fieldset>
     </section>
   );

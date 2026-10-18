@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import * as catalogService from "./catalog.service";
+import type { SearchProvidersInput } from "./catalog.validation";
 
 export async function listServiciosHandler(_req: Request, res: Response) {
   const servicios = await catalogService.listServicios();
@@ -8,7 +9,7 @@ export async function listServiciosHandler(_req: Request, res: Response) {
 }
 
 export async function searchProvidersHandler(_req: Request, res: Response) {
-  const result = await catalogService.searchProviders(res.locals.query);
+  const result = await catalogService.searchProviders(res.locals.query as SearchProvidersInput);
   res.status(200).json(result);
 }
 

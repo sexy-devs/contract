@@ -84,6 +84,8 @@ function Register() {
   const [services, setServices] =
     useState<OfferedServiceData[]>(initialServices);
   const [catalogo, setCatalogo] = useState<ServicioCatalogo[]>([]);
+  const [catalogoLoading, setCatalogoLoading] = useState(true);
+  const [catalogoError, setCatalogoError] = useState("");
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
   const [personalErrors, setPersonalErrors] =
     useState<FieldErrors<PersonalData>>({});
@@ -97,11 +99,22 @@ function Register() {
   const [documentationError, setDocumentationError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     listServicios()
-      .then(setCatalogo)
+      .then((options) => {
+        if (!cancelled) setCatalogo(options);
+      })
       .catch(() => {
-        // el paso de servicios simplemente queda sin opciones para elegir
+        if (!cancelled) setCatalogoError("No se pudo cargar el catálogo de servicios.");
+      })
+      .finally(() => {
+        if (!cancelled) setCatalogoLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isClientFinalStep = accountType === "cliente" && currentStep === 3;
@@ -264,6 +277,7 @@ function Register() {
     value: string,
   ) {
     setProfessionalInfo((data) => ({ ...data, [field]: value }));
+    clearRegistrationError();
     setProfessionalInfoErrors((errors) => {
       const nextErrors = { ...errors };
       delete nextErrors[field];
@@ -273,6 +287,7 @@ function Register() {
 
   function handleCoverageChange(field: keyof CoverageData, value: string) {
     setCoverageData((data) => ({ ...data, [field]: value }));
+    clearRegistrationError();
     setCoverageErrors((errors) => {
       const nextErrors = { ...errors };
       delete nextErrors[field];
@@ -283,6 +298,7 @@ function Register() {
   function handleServicesChange(updatedServices: OfferedServiceData[]) {
     setServices(updatedServices);
     setServiceErrors([]);
+    clearRegistrationError();
   }
 
   function handleDocumentationChange(file: File | null) {
@@ -359,7 +375,9 @@ function Register() {
               <ServicesStep
                 data={services}
                 errors={serviceErrors}
-                catalogo={catalogo}
+                options={catalogo}
+                loadingOptions={catalogoLoading}
+                catalogError={catalogoError}
                 onChange={handleServicesChange}
               />
             ) : (
