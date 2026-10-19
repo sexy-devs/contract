@@ -46,9 +46,7 @@ const initialPersonalData: PersonalData = {
 };
 
 const initialLocationData: LocationData = {
-  direccion: "",
-  ciudad: "",
-  codigoPostal: "",
+  idLocalidad: null,
 };
 
 const initialProfessionalInfo: ProfessionalInfoData = {
@@ -57,7 +55,7 @@ const initialProfessionalInfo: ProfessionalInfoData = {
 };
 
 const initialCoverageData: CoverageData = {
-  ciudad: "",
+  idLocalidad: null,
   aceptaRadioKm: "0",
   disponibilidad: "",
 };
@@ -152,9 +150,7 @@ function Register() {
           password: personalData.contrasena,
           telefono: personalData.telefono.trim(),
           rol: "cliente",
-          direccion: locationData.direccion.trim() || undefined,
-          ciudad: locationData.ciudad.trim() || undefined,
-          codigoPostal: locationData.codigoPostal.trim() || undefined,
+          idLocalidad: locationData.idLocalidad ?? undefined,
         },
         { fotoPerfil: personalData.fotoPerfil },
       );
@@ -203,7 +199,7 @@ function Register() {
           rol: "profesional",
           descripcion: professionalInfo.descripcion.trim(),
           aniosExperiencia: Number(professionalInfo.aniosExperiencia),
-          ciudad: coverageData.ciudad.trim(),
+          idLocalidad: coverageData.idLocalidad as number,
           aceptaRadioKm: Number(coverageData.aceptaRadioKm),
           disponibilidad: coverageData.disponibilidad.trim(),
           servicios: services.map((servicio) => ({
@@ -263,7 +259,7 @@ function Register() {
     });
   }
 
-  function handleLocationChange(field: keyof LocationData, value: string) {
+  function handleLocationChange(field: keyof LocationData, value: number | null) {
     setLocationData((data) => ({ ...data, [field]: value }));
     setLocationErrors((errors) => {
       const nextErrors = { ...errors };
@@ -285,7 +281,7 @@ function Register() {
     });
   }
 
-  function handleCoverageChange(field: keyof CoverageData, value: string) {
+  function handleCoverageChange(field: keyof CoverageData, value: string | number | null) {
     setCoverageData((data) => ({ ...data, [field]: value }));
     clearRegistrationError();
     setCoverageErrors((errors) => {

@@ -25,3 +25,9 @@ export const createMatriculaSchema = z.object({
 });
 
 export type CreateMatriculaInput = z.infer<typeof createMatriculaSchema>;
+
+export const updateMatriculaSchema = z.object({
+  fechaExpiracion: z.string().trim().date().nullable(),
+});
+
+export type UpdateMatriculaInput = z.infer<typeof updateMatriculaSchema>;

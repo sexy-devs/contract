@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { listServicios, type ServicioCatalogo } from "../../catalog/api/catalogApi";
 import {
+  deleteMyMatricula,
   getMyMatricula,
   getMyProviderProfile,
   getMyServices,
+  updateMyMatricula,
   updateMyProviderProfile,
   uploadMyMatricula,
   replaceMyServices,
@@ -17,6 +19,7 @@ type PersonalForm = { nombre: string; apellido: string; telefono: string };
 type PersonalErrors = Partial<Record<keyof PersonalForm, string>>;
 type ProfessionalForm = { descripcion: string; aniosExperiencia: string };
 type CoverageForm = { aceptaRadioKm: string; disponibilidad: string };
+type CoverageErrors = Partial<Record<keyof CoverageForm, string>> & { idLocalidad?: string };
 type ServicioRow = { localId: number; idServ: string; monto: string };
 
 const NAME_PATTERN = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü'\s-]+$/;
@@ -44,6 +47,8 @@ export function usePrestadorProfile() {
   const [professionalSaved, setProfessionalSaved] = useState(false);
 
   const [coverageForm, setCoverageForm] = useState<CoverageForm>({ aceptaRadioKm: "0", disponibilidad: "" });
+  const [idLocalidad, setIdLocalidadState] = useState<number | null>(null);
+  const [coverageErrors, setCoverageErrors] = useState<CoverageErrors>({});
   const [coverageSaving, setCoverageSaving] = useState(false);
   const [coverageSaved, setCoverageSaved] = useState(false);
 
@@ -71,6 +76,7 @@ export function usePrestadorProfile() {
           aceptaRadioKm: String(providerData.aceptaRadioKm),
           disponibilidad: providerData.disponibilidad ?? "",
         });
+        setIdLocalidadState(usuarioData.idLocalidad);
         setServicios(
           serviciosData.map((s) => ({ localId: localIdSeq++, idServ: String(s.idServ), monto: String(s.monto) })),
         );
@@ -147,14 +153,31 @@ export function usePrestadorProfile() {
     setCoverageSaved(false);
   }
 
+  function setIdLocalidad(value: number | null) {
+    setIdLocalidadState(value);
+    setCoverageSaved(false);
+  }
+
+  function validateCoverage() {
+    const next: CoverageErrors = {};
+    if (idLocalidad == null) next.idLocalidad = "Seleccioná tu localidad.";
+    setCoverageErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
   async function saveCoverage() {
+    if (!validateCoverage()) return;
     setCoverageSaving(true);
     try {
-      const updated = await updateMyProviderProfile({
-        aceptaRadioKm: Number(coverageForm.aceptaRadioKm) || 0,
-        disponibilidad: coverageForm.disponibilidad,
-      });
-      setProvider(updated);
+      const [updatedProvider, updatedUsuario] = await Promise.all([
+        updateMyProviderProfile({
+          aceptaRadioKm: Number(coverageForm.aceptaRadioKm) || 0,
+          disponibilidad: coverageForm.disponibilidad,
+        }),
+        updateMe({ idLocalidad: idLocalidad ?? undefined }),
+      ]);
+      setProvider(updatedProvider);
+      setUsuario(updatedUsuario);
       setCoverageSaved(true);
     } finally {
       setCoverageSaving(false);
@@ -195,17 +218,52 @@ export function usePrestadorProfile() {
     }
   }
 
-  async function uploadMatricula(file: File) {
+  async function uploadMatricula(file: File, fechaExpiracion?: string) {
     setMatriculaUploading(true);
     setMatriculaError(null);
     try {
-      const updated = await uploadMyMatricula(file);
+      const updated = await uploadMyMatricula(file, fechaExpiracion);
       setMatricula(updated);
     } catch (err) {
       setMatriculaError(err instanceof ApiError ? err.message : "No se pudo subir el documento.");
     } finally {
       setMatriculaUploading(false);
     }
+  }
+
+  async function updateMatriculaFecha(fechaExpiracion: string | null) {
+    setMatriculaUploading(true);
+    setMatriculaError(null);
+    try {
+      const updated = await updateMyMatricula(fechaExpiracion);
+      setMatricula(updated);
+    } catch (err) {
+      setMatriculaError(err instanceof ApiError ? err.message : "No se pudo actualizar la fecha de expiración.");
+    } finally {
+      setMatriculaUploading(false);
+    }
+  }
+
+  async function removeMatricula() {
+    setMatriculaUploading(true);
+    setMatriculaError(null);
+    try {
+      await deleteMyMatricula();
+      setMatricula(null);
+    } catch (err) {
+      setMatriculaError(err instanceof ApiError ? err.message : "No se pudo eliminar el documento.");
+    } finally {
+      setMatriculaUploading(false);
+    }
+  }
+
+  const anySaved = personalSaved || professionalSaved || coverageSaved || serviciosSaved;
+
+  function dismissSaved() {
+    setPersonalSaved(false);
+    setProfessionalSaved(false);
+    setCoverageSaved(false);
+    setServiciosSaved(false);
   }
 
   return {
@@ -222,22 +280,21 @@ export function usePrestadorProfile() {
     personalForm,
     personalErrors,
     personalSaving,
-    personalSaved,
     setPersonalField,
     savePersonal,
     professionalForm,
     professionalSaving,
-    professionalSaved,
     setProfessionalField,
     saveProfessional,
     coverageForm,
+    coverageErrors,
     coverageSaving,
-    coverageSaved,
+    idLocalidad,
     setCoverageField,
+    setIdLocalidad,
     saveCoverage,
     servicios,
     serviciosSaving,
-    serviciosSaved,
     serviciosError,
     addServicio,
     removeServicio,
@@ -246,5 +303,9 @@ export function usePrestadorProfile() {
     matriculaUploading,
     matriculaError,
     uploadMatricula,
+    updateMatriculaFecha,
+    removeMatricula,
+    anySaved,
+    dismissSaved,
   };
 }

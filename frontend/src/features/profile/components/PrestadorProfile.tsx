@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import Toast from "../../../components/ui/Toast";
+import { useLocationCatalog } from "../../catalog/hooks/useLocationCatalog";
 import { usePrestadorProfile } from "../hooks/usePrestadorProfile";
 import MatriculaCard from "./MatriculaCard";
 import ProfileField from "./ProfileField";
@@ -20,22 +23,21 @@ function PrestadorProfile() {
     personalForm,
     personalErrors,
     personalSaving,
-    personalSaved,
     setPersonalField,
     savePersonal,
     professionalForm,
     professionalSaving,
-    professionalSaved,
     setProfessionalField,
     saveProfessional,
     coverageForm,
+    coverageErrors,
     coverageSaving,
-    coverageSaved,
+    idLocalidad,
     setCoverageField,
+    setIdLocalidad,
     saveCoverage,
     servicios,
     serviciosSaving,
-    serviciosSaved,
     serviciosError,
     addServicio,
     removeServicio,
@@ -44,7 +46,26 @@ function PrestadorProfile() {
     matriculaUploading,
     matriculaError,
     uploadMatricula,
+    updateMatriculaFecha,
+    removeMatricula,
+    anySaved,
+    dismissSaved,
   } = usePrestadorProfile();
+
+  const { provincias, localidades, loading: loadingUbicacion } = useLocationCatalog();
+  const [idProvincia, setIdProvincia] = useState<number | "">("");
+
+  useEffect(() => {
+    if (idLocalidad == null || localidades.length === 0) return;
+    const localidad = localidades.find((l) => l.id === idLocalidad);
+    if (localidad) setIdProvincia(localidad.idProvincia);
+  }, [idLocalidad, localidades]);
+
+  const localidadesFiltradas = idProvincia === "" ? [] : localidades.filter((l) => l.idProvincia === idProvincia);
+
+  const localidadActual = idLocalidad != null ? localidades.find((l) => l.id === idLocalidad) : undefined;
+  const provinciaActual = localidadActual ? provincias.find((p) => p.id === localidadActual.idProvincia) : undefined;
+  const zonaLabel = localidadActual && provinciaActual ? `${localidadActual.nombre}, ${provinciaActual.nombre}` : null;
 
   if (loading) {
     return <p className="text-gray-600">Cargando perfil...</p>;
@@ -60,9 +81,9 @@ function PrestadorProfile() {
     <div className="mx-auto max-w-5xl">
       <div className="rounded-2xl border border-gray-200 bg-white shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 p-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <div
-              className="flex size-14 shrink-0 items-center justify-center rounded-full bg-blue-50 bg-cover bg-center text-base font-semibold text-sky-800"
+              className="flex size-20 shrink-0 items-center justify-center rounded-full bg-blue-50 bg-cover bg-center text-2xl font-semibold text-sky-800"
               style={usuario.fotoUrl ? { backgroundImage: `url(${usuario.fotoUrl})` } : undefined}
             >
               {!usuario.fotoUrl && initials}
@@ -76,6 +97,7 @@ function PrestadorProfile() {
               </div>
               <p className="text-sm text-gray-600">
                 {usuario.email} · {usuario.telefono}
+                {zonaLabel && <> · {zonaLabel}</>}
               </p>
             </div>
           </div>
@@ -118,8 +140,6 @@ function PrestadorProfile() {
                 <h2 className="font-semibold text-gray-900">Datos personales</h2>
                 <p className="text-sm text-gray-600">Nombre y datos de contacto.</p>
 
-                {personalSaved && <p className="mt-4 text-sm font-medium text-green-700">✓ Cambios guardados correctamente.</p>}
-
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <ProfileField
                     id="pr-nombre"
@@ -149,12 +169,12 @@ function PrestadorProfile() {
                   />
                 </div>
 
-                <div className="mt-5 flex justify-end">
+                <div className="mt-6 flex justify-end border-t border-gray-200 pt-5">
                   <button
                     type="button"
                     onClick={savePersonal}
                     disabled={personalSaving}
-                    className="rounded-lg bg-sky-800 px-5 py-2.5 font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
+                    className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                   >
                     {personalSaving ? "Guardando..." : "Guardar cambios"}
                   </button>
@@ -166,8 +186,6 @@ function PrestadorProfile() {
               <div>
                 <h2 className="font-semibold text-gray-900">Información profesional</h2>
                 <p className="text-sm text-gray-600">Cómo te presentás ante los clientes.</p>
-
-                {professionalSaved && <p className="mt-4 text-sm font-medium text-green-700">✓ Cambios guardados correctamente.</p>}
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <ProfileField
@@ -188,12 +206,12 @@ function PrestadorProfile() {
                   />
                 </div>
 
-                <div className="mt-5 flex justify-end">
+                <div className="mt-6 flex justify-end border-t border-gray-200 pt-5">
                   <button
                     type="button"
                     onClick={saveProfessional}
                     disabled={professionalSaving}
-                    className="rounded-lg bg-sky-800 px-5 py-2.5 font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
+                    className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                   >
                     {professionalSaving ? "Guardando..." : "Guardar cambios"}
                   </button>
@@ -206,9 +224,33 @@ function PrestadorProfile() {
                 <h2 className="font-semibold text-gray-900">Cobertura y disponibilidad</h2>
                 <p className="text-sm text-gray-600">Dónde y cuándo ofrecés tus servicios.</p>
 
-                {coverageSaved && <p className="mt-4 text-sm font-medium text-green-700">✓ Cambios guardados correctamente.</p>}
-
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <ProfileField
+                    id="pr-provincia"
+                    label="Provincia"
+                    type="select"
+                    required
+                    placeholder={loadingUbicacion ? "Cargando..." : "Seleccionar provincia"}
+                    value={String(idProvincia)}
+                    onChange={(v) => {
+                      setIdProvincia(v === "" ? "" : Number(v));
+                      setIdLocalidad(null);
+                    }}
+                    disabled={loadingUbicacion}
+                    options={provincias.map((p) => ({ value: p.id, label: p.nombre }))}
+                  />
+                  <ProfileField
+                    id="pr-localidad"
+                    label="Localidad"
+                    type="select"
+                    required
+                    placeholder="Seleccionar localidad"
+                    value={idLocalidad != null ? String(idLocalidad) : ""}
+                    onChange={(v) => setIdLocalidad(v === "" ? null : Number(v))}
+                    disabled={loadingUbicacion || idProvincia === ""}
+                    error={coverageErrors.idLocalidad}
+                    options={localidadesFiltradas.map((l) => ({ value: l.id, label: l.nombre }))}
+                  />
                   <ProfileField
                     id="pr-radio"
                     label="Radio de cobertura"
@@ -226,12 +268,12 @@ function PrestadorProfile() {
                   />
                 </div>
 
-                <div className="mt-5 flex justify-end">
+                <div className="mt-6 flex justify-end border-t border-gray-200 pt-5">
                   <button
                     type="button"
                     onClick={saveCoverage}
                     disabled={coverageSaving}
-                    className="rounded-lg bg-sky-800 px-5 py-2.5 font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
+                    className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                   >
                     {coverageSaving ? "Guardando..." : "Guardar cambios"}
                   </button>
@@ -245,7 +287,14 @@ function PrestadorProfile() {
                 <p className="text-sm text-gray-600">Acreditación de tu experiencia profesional.</p>
 
                 <div className="mt-4">
-                  <MatriculaCard matricula={matricula} uploading={matriculaUploading} error={matriculaError} onUpload={uploadMatricula} />
+                  <MatriculaCard
+                    matricula={matricula}
+                    uploading={matriculaUploading}
+                    error={matriculaError}
+                    onUpload={uploadMatricula}
+                    onUpdateFecha={updateMatriculaFecha}
+                    onDelete={removeMatricula}
+                  />
                 </div>
               </div>
             )}
@@ -260,7 +309,6 @@ function PrestadorProfile() {
                     servicios={servicios}
                     catalogo={catalogo}
                     saving={serviciosSaving}
-                    saved={serviciosSaved}
                     error={serviciosError}
                     onAdd={addServicio}
                     onRemove={removeServicio}
@@ -273,6 +321,8 @@ function PrestadorProfile() {
           </div>
         </div>
       </div>
+
+      <Toast show={anySaved} message="Cambios guardados correctamente." onDismiss={dismissSaved} />
     </div>
   );
 }

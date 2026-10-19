@@ -4,12 +4,12 @@ import { db } from "../../database/client";
 import {
   calificaciones,
   clientes,
-  codigosXLocalidad,
   localidades,
   matriculas,
   matriculasXProfesional,
   pedidos,
   profesionales,
+  provincias,
   servicios,
   serviciosXProfesional,
   usuarios,
@@ -69,6 +69,7 @@ export async function searchProviders(input: SearchProvidersInput) {
       verificado: profesionales.verificado,
       disponibilidad: profesionales.disponibilidad,
       zona: localidades.nombre,
+      provincia: provincias.nombre,
       fotoUrl: usuarios.fotoUrl,
       oficio: sql<string | null>`string_agg(distinct ${servicios.nombre}, ', ')`.as("oficio"),
       precioDesde: sql<number | null>`min(${serviciosXProfesional.monto})`.as("precio_desde"),
@@ -78,12 +79,12 @@ export async function searchProviders(input: SearchProvidersInput) {
     })
     .from(profesionales)
     .innerJoin(usuarios, eq(usuarios.id, profesionales.idUsuario))
-    .leftJoin(codigosXLocalidad, eq(codigosXLocalidad.id, usuarios.idCodigoLocalidad))
-    .leftJoin(localidades, eq(localidades.id, codigosXLocalidad.idLocalidad))
+    .leftJoin(localidades, eq(localidades.id, usuarios.idLocalidad))
+    .leftJoin(provincias, eq(provincias.id, localidades.idProvincia))
     .leftJoin(serviciosXProfesional, eq(serviciosXProfesional.idProf, profesionales.id))
     .leftJoin(servicios, eq(servicios.id, serviciosXProfesional.idServ))
     .where(whereClause)
-    .groupBy(profesionales.id, usuarios.id, localidades.id);
+    .groupBy(profesionales.id, usuarios.id, localidades.id, provincias.id);
 
   const direction = resolveDirection(input.ordenarPor, input.orden);
   const directionSql = sql.raw(direction);
@@ -101,8 +102,7 @@ export async function searchProviders(input: SearchProvidersInput) {
       .select({ total: countDistinct(profesionales.id) })
       .from(profesionales)
       .innerJoin(usuarios, eq(usuarios.id, profesionales.idUsuario))
-      .leftJoin(codigosXLocalidad, eq(codigosXLocalidad.id, usuarios.idCodigoLocalidad))
-      .leftJoin(localidades, eq(localidades.id, codigosXLocalidad.idLocalidad))
+      .leftJoin(localidades, eq(localidades.id, usuarios.idLocalidad))
       .leftJoin(serviciosXProfesional, eq(serviciosXProfesional.idProf, profesionales.id))
       .leftJoin(servicios, eq(servicios.id, serviciosXProfesional.idServ))
       .where(whereClause),
@@ -125,13 +125,13 @@ export async function getProviderPublicProfile(providerId: number) {
     throw new NotFoundError("Prestador no encontrado");
   }
 
-  const [usuario, zonaRow, serviciosOfrecidos, matriculaVigente, trabajosRecientes, resenasRecientes] = await Promise.all([
+  const [usuario, ubicacion, serviciosOfrecidos, matriculaVigente, trabajosRecientes, resenasRecientes] = await Promise.all([
     db.query.usuarios.findFirst({ where: eq(usuarios.id, profesional.idUsuario) }),
     db
-      .select({ nombre: localidades.nombre })
+      .select({ zona: localidades.nombre, provincia: provincias.nombre })
       .from(usuarios)
-      .leftJoin(codigosXLocalidad, eq(codigosXLocalidad.id, usuarios.idCodigoLocalidad))
-      .leftJoin(localidades, eq(localidades.id, codigosXLocalidad.idLocalidad))
+      .leftJoin(localidades, eq(localidades.id, usuarios.idLocalidad))
+      .leftJoin(provincias, eq(provincias.id, localidades.idProvincia))
       .where(eq(usuarios.id, profesional.idUsuario))
       .then((rows) => rows[0]),
     db
@@ -172,7 +172,8 @@ export async function getProviderPublicProfile(providerId: number) {
     nombre: usuario?.nombre,
     apellido: usuario?.apellido,
     fotoUrl: usuario?.fotoUrl ?? null,
-    zona: zonaRow?.nombre ?? null,
+    zona: ubicacion?.zona ?? null,
+    provincia: ubicacion?.provincia ?? null,
     descripcion: profesional.descripcion,
     aniosExperiencia: profesional.aniosExperiencia,
     aceptaRadioKm: profesional.aceptaRadioKm,
@@ -195,7 +196,11 @@ export async function getProviderPublicProfile(providerId: number) {
 
 export async function listZones() {
   return db
-    .select({ id: localidades.id, nombre: localidades.nombre })
+    .select({ id: localidades.id, nombre: localidades.nombre, idProvincia: localidades.idProvincia })
     .from(localidades)
     .orderBy(localidades.nombre);
+}
+
+export async function listProvincias() {
+  return db.select({ id: provincias.id, nombre: provincias.nombre }).from(provincias).orderBy(provincias.nombre);
 }

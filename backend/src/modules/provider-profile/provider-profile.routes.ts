@@ -6,13 +6,20 @@ import { validateBody } from "../../shared/middleware/validate";
 import { documentUpload } from "../../shared/upload/documentUpload";
 import {
   createMatriculaHandler,
+  deleteMyMatriculaHandler,
   getMyMatriculaHandler,
   getMyServicesHandler,
   getProviderProfileHandler,
   replaceServicesHandler,
+  updateMyMatriculaHandler,
   updateProviderProfileHandler,
 } from "./provider-profile.controller";
-import { createMatriculaSchema, replaceServicesSchema, updateProviderProfileSchema } from "./provider-profile.validation";
+import {
+  createMatriculaSchema,
+  replaceServicesSchema,
+  updateMatriculaSchema,
+  updateProviderProfileSchema,
+} from "./provider-profile.validation";
 
 export const providerProfileRouter = Router();
 
@@ -28,3 +35,5 @@ providerProfileRouter.post(
   validateBody(createMatriculaSchema),
   asyncHandler(createMatriculaHandler),
 );
+providerProfileRouter.patch("/me/matricula", validateBody(updateMatriculaSchema), asyncHandler(updateMyMatriculaHandler));
+providerProfileRouter.delete("/me/matricula", asyncHandler(deleteMyMatriculaHandler));

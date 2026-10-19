@@ -1,7 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 
 import { db } from "../../database/client";
-import { clientes, profesionales, servicios, serviciosXProfesional, usuarios } from "../../database/schema";
+import { clientes, localidades, profesionales, servicios, serviciosXProfesional, usuarios } from "../../database/schema";
 import { ConflictError, UnauthorizedError, ValidationError } from "../../shared/errors/AppError";
 import { comparePassword, hashPassword } from "../../shared/utils/password";
 import { signToken } from "../../shared/utils/jwt";
@@ -23,6 +23,14 @@ export async function register(input: RegisterInput) {
     }
   }
 
+  if (input.idLocalidad !== undefined) {
+    const localidad = await db.query.localidades.findFirst({ where: eq(localidades.id, input.idLocalidad) });
+
+    if (!localidad) {
+      throw new ValidationError("La localidad seleccionada no existe");
+    }
+  }
+
   const contrasenaHash = await hashPassword(input.contrasena);
 
   const usuario = await db.transaction(async (tx) => {
@@ -35,9 +43,7 @@ export async function register(input: RegisterInput) {
         contrasena: contrasenaHash,
         telefono: input.telefono,
         rol: input.rol,
-        ciudad: input.ciudad,
-        direccion: input.rol === "cliente" ? input.direccion : undefined,
-        codigoPostal: input.rol === "cliente" ? input.codigoPostal : undefined,
+        idLocalidad: input.idLocalidad,
         estadoRegistro: "activo",
       })
       .returning();

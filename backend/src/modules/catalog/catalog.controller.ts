@@ -22,3 +22,7 @@ export async function getProviderPublicProfileHandler(req: Request, res: Respons
 export async function listZonesHandler(_req: Request, res: Response) {
   res.status(200).json(await catalogService.listZones());
 }
+
+export async function listProvinciasHandler(_req: Request, res: Response) {
+  res.status(200).json(await catalogService.listProvincias());
+}

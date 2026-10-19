@@ -1,4 +1,4 @@
-import Header from "../components/Header";
+import Header from "../../../components/layout/Header";
 import SearchJobs from "../components/SearchJobs";
 import JobsSection from "../components/JobsSection";
 

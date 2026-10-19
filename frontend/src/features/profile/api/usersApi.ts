@@ -8,7 +8,7 @@ export type UserProfile = {
   emailVerificado: boolean;
   telefono: string;
   fotoUrl: string | null;
-  idCodigoLocalidad: number | null;
+  idLocalidad: number | null;
   latitud: number | null;
   longitud: number | null;
   fechaCreado: string;
@@ -23,6 +23,7 @@ export type UpdateProfilePayload = Partial<{
   apellido: string;
   telefono: string;
   fotoUrl: string;
+  idLocalidad: number;
 }>;
 
 export function getMe(): Promise<UserProfile> {

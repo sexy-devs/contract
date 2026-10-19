@@ -6,7 +6,6 @@ type Props = {
   servicios: ServicioRow[];
   catalogo: ServicioCatalogo[];
   saving?: boolean;
-  saved?: boolean;
   error?: string | null;
   onAdd: () => void;
   onRemove: (localId: number) => void;
@@ -14,10 +13,9 @@ type Props = {
   onSave: () => void;
 };
 
-function ServiciosEditor({ servicios, catalogo, saving, saved, error, onAdd, onRemove, onChange, onSave }: Props) {
+function ServiciosEditor({ servicios, catalogo, saving, error, onAdd, onRemove, onChange, onSave }: Props) {
   return (
     <div>
-      {saved && <p className="mb-4 text-sm font-medium text-green-700">✓ Cambios guardados correctamente.</p>}
       {error && <p className="mb-4 text-sm font-medium text-red-600">{error}</p>}
 
       <div className="grid grid-cols-[1fr_140px_auto] items-end gap-3 text-xs font-medium text-gray-500">
@@ -80,7 +78,7 @@ function ServiciosEditor({ servicios, catalogo, saving, saved, error, onAdd, onR
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="rounded-lg bg-sky-800 px-5 py-2.5 font-semibold text-white hover:bg-sky-900 disabled:opacity-60"
+          className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
         >
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>

@@ -19,6 +19,7 @@ export const updateProfileSchema = z.object({
   apellido: nombreSchema.optional(),
   telefono: telefonoSchema.optional(),
   fotoUrl: z.string().trim().url().max(500).optional(),
+  idLocalidad: z.number().int().positive().optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

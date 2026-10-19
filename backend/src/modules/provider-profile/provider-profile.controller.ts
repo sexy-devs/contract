@@ -31,3 +31,13 @@ export async function getMyMatriculaHandler(req: Request, res: Response) {
   const matricula = await providerProfileService.getMyMatricula(req.user!.sub);
   res.status(200).json(matricula);
 }
+
+export async function updateMyMatriculaHandler(req: Request, res: Response) {
+  const matricula = await providerProfileService.updateMyMatricula(req.user!.sub, req.body);
+  res.status(200).json(matricula);
+}
+
+export async function deleteMyMatriculaHandler(req: Request, res: Response) {
+  await providerProfileService.deleteMyMatricula(req.user!.sub);
+  res.status(204).send();
+}

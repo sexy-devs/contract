@@ -1,16 +1,19 @@
+type SelectOption = { value: string | number; label: string };
+
 type Props = {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
-  type?: "text" | "email" | "tel" | "number" | "textarea";
+  type?: "text" | "email" | "tel" | "number" | "textarea" | "select";
   placeholder?: string;
   suffix?: string;
   hint?: string;
   error?: string;
   disabled?: boolean;
   className?: string;
+  options?: SelectOption[];
 };
 
 function ProfileField({
@@ -26,8 +29,9 @@ function ProfileField({
   error,
   disabled,
   className,
+  options,
 }: Props) {
-  const inputClass = `w-full rounded-md border-2 p-2.5 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ${
+  const inputClass = `w-full rounded-lg border p-2.5 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 ${
     error ? "border-red-500" : "border-gray-200"
   }`;
 
@@ -55,6 +59,23 @@ function ProfileField({
             aria-describedby={error ? `${id}-error` : undefined}
             className={inputClass}
           />
+        ) : type === "select" ? (
+          <select
+            id={id}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={inputClass}
+          >
+            <option value="">{placeholder ?? "Seleccionar"}</option>
+            {options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         ) : (
           <input
             id={id}

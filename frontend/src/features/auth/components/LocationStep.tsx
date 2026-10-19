@@ -1,19 +1,31 @@
+import { useEffect, useState } from "react";
+import { useLocationCatalog } from "../../catalog/hooks/useLocationCatalog";
+
 export type LocationData = {
-  direccion: string;
-  ciudad: string;
-  codigoPostal: string;
+  idLocalidad: number | null;
 };
 
 type Props = {
   data: LocationData;
   errors: Partial<Record<keyof LocationData, string>>;
-  onChange: (field: keyof LocationData, value: string) => void;
+  onChange: (field: keyof LocationData, value: number | null) => void;
 };
 
 const inputClass =
   "w-full rounded-lg border-2 border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none placeholder:text-gray-400 focus:border-sky-800";
 
 function LocationStep({ data, errors, onChange }: Props) {
+  const { provincias, localidades, loading } = useLocationCatalog();
+  const [idProvincia, setIdProvincia] = useState<number | "">("");
+
+  useEffect(() => {
+    if (data.idLocalidad == null || localidades.length === 0) return;
+    const localidad = localidades.find((l) => l.id === data.idLocalidad);
+    if (localidad) setIdProvincia(localidad.idProvincia);
+  }, [data.idLocalidad, localidades]);
+
+  const localidadesFiltradas = idProvincia === "" ? [] : localidades.filter((l) => l.idProvincia === idProvincia);
+
   return (
     <section aria-labelledby="location-title">
       <div className="flex items-center gap-3">
@@ -26,61 +38,43 @@ function LocationStep({ data, errors, onChange }: Props) {
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <label className="font-semibold text-gray-900 md:col-span-2">
-          Dirección
-          <input
-            type="text"
-            value={data.direccion}
-            onChange={(event) => onChange("direccion", event.target.value)}
-            placeholder="Calle y número"
-            autoComplete="street-address"
-            maxLength={200}
-            aria-invalid={Boolean(errors.direccion)}
-            aria-describedby={errors.direccion ? "address-error" : undefined}
-            className={`${inputClass} mt-1.5 ${errors.direccion ? "border-red-500" : ""}`}
-          />
-          {errors.direccion && (
-            <span id="address-error" className="mt-1 block text-sm font-normal text-red-600">
-              {errors.direccion}
-            </span>
-          )}
+        <label className="font-semibold text-gray-900">
+          Provincia
+          <select
+            value={idProvincia}
+            onChange={(event) => {
+              setIdProvincia(event.target.value === "" ? "" : Number(event.target.value));
+              onChange("idLocalidad", null);
+            }}
+            disabled={loading}
+            className={`${inputClass} mt-1.5`}
+          >
+            <option value="">{loading ? "Cargando..." : "Seleccionar provincia"}</option>
+            {provincias.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="font-semibold text-gray-900">
-          Ciudad
-          <input
-            type="text"
-            value={data.ciudad}
-            onChange={(event) => onChange("ciudad", event.target.value)}
-            autoComplete="address-level2"
-            maxLength={100}
-            aria-invalid={Boolean(errors.ciudad)}
-            aria-describedby={errors.ciudad ? "client-city-error" : undefined}
-            className={`${inputClass} mt-1.5 ${errors.ciudad ? "border-red-500" : ""}`}
-          />
-          {errors.ciudad && (
-            <span id="client-city-error" className="mt-1 block text-sm font-normal text-red-600">
-              {errors.ciudad}
-            </span>
-          )}
-        </label>
-
-        <label className="font-semibold text-gray-900">
-          Código postal
-          <input
-            type="text"
-            value={data.codigoPostal}
-            onChange={(event) => onChange("codigoPostal", event.target.value)}
-            autoComplete="postal-code"
-            maxLength={10}
-            aria-invalid={Boolean(errors.codigoPostal)}
-            aria-describedby={errors.codigoPostal ? "postal-code-error" : undefined}
-            className={`${inputClass} mt-1.5 ${errors.codigoPostal ? "border-red-500" : ""}`}
-          />
-          {errors.codigoPostal && (
-            <span id="postal-code-error" className="mt-1 block text-sm font-normal text-red-600">
-              {errors.codigoPostal}
-            </span>
+          Localidad
+          <select
+            value={data.idLocalidad ?? ""}
+            onChange={(event) => onChange("idLocalidad", event.target.value === "" ? null : Number(event.target.value))}
+            disabled={loading || idProvincia === ""}
+            className={`${inputClass} mt-1.5 ${errors.idLocalidad ? "border-red-500" : ""}`}
+          >
+            <option value="">Seleccionar localidad</option>
+            {localidadesFiltradas.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.idLocalidad && (
+            <span className="mt-1 block text-sm font-normal text-red-600">{errors.idLocalidad}</span>
           )}
         </label>
       </div>

@@ -89,7 +89,12 @@ function ProviderDetailPanel({ providerId, onClose }: Props) {
                 {profile.nombre} {profile.apellido}
               </h2>
               {oficio && <p className="font-medium text-sky-800">{oficio}</p>}
-              {profile.zona && <p className="text-sm text-gray-500">{profile.zona}, Buenos Aires</p>}
+              {profile.zona && (
+                <p className="text-sm text-gray-500">
+                  {profile.zona}
+                  {profile.provincia ? `, ${profile.provincia}` : ""}
+                </p>
+              )}
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">

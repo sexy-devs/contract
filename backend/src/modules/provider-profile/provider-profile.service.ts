@@ -4,7 +4,12 @@ import { db } from "../../database/client";
 import { matriculas, matriculasXProfesional, profesionales, servicios, serviciosXProfesional } from "../../database/schema";
 import { NotFoundError, ValidationError } from "../../shared/errors/AppError";
 import { uploadBufferToCloudinary } from "../../shared/upload/cloudinaryUpload";
-import type { CreateMatriculaInput, ReplaceServicesInput, UpdateProviderProfileInput } from "./provider-profile.validation";
+import type {
+  CreateMatriculaInput,
+  ReplaceServicesInput,
+  UpdateMatriculaInput,
+  UpdateProviderProfileInput,
+} from "./provider-profile.validation";
 
 async function findProfesionalByUserId(userId: number) {
   const profesional = await db.query.profesionales.findFirst({ where: eq(profesionales.idUsuario, userId) });
@@ -95,4 +100,44 @@ export async function getMyMatricula(userId: number) {
     .limit(1);
 
   return vinculo?.matricula ?? null;
+}
+
+export async function updateMyMatricula(userId: number, input: UpdateMatriculaInput) {
+  const profesional = await findProfesionalByUserId(userId);
+
+  const [vinculo] = await db
+    .select({ idMatricula: matriculasXProfesional.idMatricula })
+    .from(matriculasXProfesional)
+    .where(eq(matriculasXProfesional.idProf, profesional.id))
+    .orderBy(desc(matriculasXProfesional.id))
+    .limit(1);
+
+  if (!vinculo) {
+    throw new NotFoundError("No tenés una matrícula cargada");
+  }
+
+  const [updated] = await db
+    .update(matriculas)
+    .set({ fechaExpiracion: input.fechaExpiracion })
+    .where(eq(matriculas.id, vinculo.idMatricula))
+    .returning();
+
+  return updated;
+}
+
+export async function deleteMyMatricula(userId: number) {
+  const profesional = await findProfesionalByUserId(userId);
+
+  const [vinculo] = await db
+    .select({ idMatricula: matriculasXProfesional.idMatricula })
+    .from(matriculasXProfesional)
+    .where(eq(matriculasXProfesional.idProf, profesional.id))
+    .orderBy(desc(matriculasXProfesional.id))
+    .limit(1);
+
+  if (!vinculo) {
+    throw new NotFoundError("No tenés una matrícula cargada");
+  }
+
+  await db.delete(matriculas).where(eq(matriculas.id, vinculo.idMatricula));
 }

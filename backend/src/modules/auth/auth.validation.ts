@@ -31,9 +31,7 @@ const baseRegisterFields = {
 const clienteRegisterSchema = z.object({
   ...baseRegisterFields,
   rol: z.literal("cliente"),
-  direccion: z.string().trim().max(200).optional(),
-  ciudad: z.string().trim().max(100).optional(),
-  codigoPostal: z.string().trim().max(10).optional(),
+  idLocalidad: z.number().int().positive().optional(),
 });
 
 const profesionalRegisterSchema = z.object({
@@ -41,7 +39,7 @@ const profesionalRegisterSchema = z.object({
   rol: z.literal("profesional"),
   descripcion: z.string().trim().min(1, "Este campo es obligatorio").max(500),
   aniosExperiencia: z.number().int().min(0).max(100),
-  ciudad: z.string().trim().min(1, "Este campo es obligatorio").max(100),
+  idLocalidad: z.number().int().positive(),
   aceptaRadioKm: z.number().int().min(0).max(200),
   disponibilidad: z.string().trim().min(1, "Este campo es obligatorio").max(200),
   servicios: z

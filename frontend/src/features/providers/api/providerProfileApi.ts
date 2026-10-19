@@ -54,8 +54,17 @@ export function getMyMatricula(): Promise<Matricula | null> {
   return apiClient.get<Matricula | null>("/profesionales/me/matricula");
 }
 
-export function uploadMyMatricula(file: File): Promise<Matricula> {
+export function uploadMyMatricula(file: File, fechaExpiracion?: string): Promise<Matricula> {
   const formData = new FormData();
   formData.append("documento", file);
+  if (fechaExpiracion) formData.append("fechaExpiracion", fechaExpiracion);
   return apiClient.post<Matricula>("/profesionales/me/matricula", formData);
+}
+
+export function updateMyMatricula(fechaExpiracion: string | null): Promise<Matricula> {
+  return apiClient.patch<Matricula>("/profesionales/me/matricula", { fechaExpiracion });
+}
+
+export function deleteMyMatricula(): Promise<void> {
+  return apiClient.delete("/profesionales/me/matricula");
 }

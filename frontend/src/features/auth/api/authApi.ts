@@ -12,16 +12,14 @@ type BaseRegisterPayload = {
 
 export type RegisterClientePayload = BaseRegisterPayload & {
   rol: "cliente";
-  direccion?: string;
-  ciudad?: string;
-  codigoPostal?: string;
+  idLocalidad?: number;
 };
 
 export type RegisterProfesionalPayload = BaseRegisterPayload & {
   rol: "profesional";
   descripcion: string;
   aniosExperiencia: number;
-  ciudad: string;
+  idLocalidad: number;
   aceptaRadioKm: number;
   disponibilidad: string;
   servicios: { idServ: number; monto: number }[];
@@ -36,9 +34,7 @@ export type AuthUser = {
   email: string;
   telefono: string;
   fotoUrl: string | null;
-  direccion: string | null;
-  ciudad: string | null;
-  codigoPostal: string | null;
+  idLocalidad: number | null;
   rol: "cliente" | "profesional" | "admin";
 };
 

@@ -16,9 +16,9 @@ function ProfilePhoto({ fotoUrl, initials, description, uploading, onSelectFile 
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-6">
       <div
-        className="flex size-16 shrink-0 items-center justify-center rounded-full bg-blue-50 bg-cover bg-center text-lg font-semibold text-sky-800"
+        className="flex size-20 shrink-0 items-center justify-center rounded-full bg-blue-50 bg-cover bg-center text-2xl font-semibold text-sky-800"
         style={fotoUrl ? { backgroundImage: `url(${fotoUrl})` } : undefined}
       >
         {!fotoUrl && initials}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import LogoContract from "../../../components/layout/LogoContract";
+import LogoContract from "./LogoContract";
 import { useNavigate } from "react-router-dom";
 
 interface User {
@@ -59,7 +59,7 @@ function Header() {
   return (
     <div
       id="header"
-      className="bg-white pt-5 pb-5 px-2.5 flex items-center justify-between w-full"
+      className="bg-white border-b border-gray-200 px-6 py-4 sm:px-10 flex items-center justify-between w-full"
     >
       <LogoContract />
       <div ref={menuRef} className="relative">

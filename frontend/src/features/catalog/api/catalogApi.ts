@@ -7,6 +7,7 @@ export type ProviderRow = {
   fotoUrl: string | null;
   oficio: string | null;
   zona: string | null;
+  provincia: string | null;
   calificacionGlobal: string | number | null;
   cantidadCalificaciones: number | null;
   verificado: boolean;
@@ -25,6 +26,7 @@ export type ProviderPublicProfile = {
   apellido: string | undefined;
   fotoUrl: string | null;
   zona: string | null;
+  provincia: string | null;
   descripcion: string | null;
   aniosExperiencia: number;
   aceptaRadioKm: number;
@@ -40,13 +42,19 @@ export type ProviderPublicProfile = {
 };
 
 export type ServicioCatalogo = { id: number; nombre: string };
+export type Localidad = { id: number; nombre: string; idProvincia: number };
+export type Provincia = { id: number; nombre: string };
 
 export function listServicios(): Promise<ServicioCatalogo[]> {
   return apiClient.get<ServicioCatalogo[]>("/catalogo/servicios");
 }
 
-export function listZones(): Promise<{ id: number; nombre: string }[]> {
-  return apiClient.get<{ id: number; nombre: string }[]>("/catalogo/zonas");
+export function listZones(): Promise<Localidad[]> {
+  return apiClient.get<Localidad[]>("/catalogo/zonas");
+}
+
+export function listProvincias(): Promise<Provincia[]> {
+  return apiClient.get<Provincia[]>("/catalogo/provincias");
 }
 
 export function searchProviders(params = ""): Promise<SearchProvidersResponse> {

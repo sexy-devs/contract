@@ -12,7 +12,6 @@ export type ServiceRowError = Partial<
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneCharactersPattern = /^[+\d\s()-]+$/;
-const postalCodePattern = /^[A-Za-z0-9 -]+$/;
 
 const profilePhotoMaxBytes = 5 * 1024 * 1024;
 export const documentationMaxBytes = 10 * 1024 * 1024;
@@ -72,21 +71,8 @@ export function validatePersonalData(data: PersonalData) {
   return errors;
 }
 
-export function validateLocation(data: LocationData) {
+export function validateLocation(_data: LocationData) {
   const errors: FieldErrors<LocationData> = {};
-  const direccion = data.direccion.trim();
-  const ciudad = data.ciudad.trim();
-  const codigoPostal = data.codigoPostal.trim();
-
-  if (direccion.length > 200)
-    errors.direccion = "La dirección no puede superar los 200 caracteres.";
-  if (ciudad.length > 100)
-    errors.ciudad = "La ciudad no puede superar los 100 caracteres.";
-  if (codigoPostal.length > 10)
-    errors.codigoPostal = "El código postal no puede superar los 10 caracteres.";
-  else if (codigoPostal && !postalCodePattern.test(codigoPostal))
-    errors.codigoPostal = "Ingresá un código postal válido.";
-
   return errors;
 }
 
@@ -110,12 +96,9 @@ export function validateProfessionalInfo(data: ProfessionalInfoData) {
 export function validateCoverage(data: CoverageData) {
   const errors: FieldErrors<CoverageData> = {};
   const radius = Number(data.aceptaRadioKm);
-  const ciudad = data.ciudad.trim();
   const disponibilidad = data.disponibilidad.trim();
 
-  if (!ciudad) errors.ciudad = "Ingresá tu ciudad.";
-  else if (ciudad.length > 100)
-    errors.ciudad = "La ciudad no puede superar los 100 caracteres.";
+  if (data.idLocalidad == null) errors.idLocalidad = "Seleccioná tu localidad.";
 
   if (data.aceptaRadioKm === "")
     errors.aceptaRadioKm = "Ingresá el radio de cobertura.";

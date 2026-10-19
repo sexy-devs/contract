@@ -1,6 +1,6 @@
 import { boolean, doublePrecision, index, integer, pgEnum, pgTable, serial, timestamp, varchar } from "drizzle-orm/pg-core";
 
-import { codigosXLocalidad } from "./location";
+import { localidades } from "./location";
 
 export const rolUsuarioValues = ["cliente", "profesional", "admin"] as const;
 export const estadoRegistroValues = ["pendiente", "activo", "suspendido"] as const;
@@ -19,10 +19,7 @@ export const usuarios = pgTable(
     contrasena: varchar("contrasena", { length: 255 }).notNull(),
     telefono: varchar("telefono", { length: 30 }).notNull(),
     fotoUrl: varchar("foto_url", { length: 500 }),
-    direccion: varchar("direccion", { length: 200 }),
-    ciudad: varchar("ciudad", { length: 100 }),
-    codigoPostal: varchar("codigo_postal", { length: 10 }),
-    idCodigoLocalidad: integer("id_codigo_localidad").references(() => codigosXLocalidad.id),
+    idLocalidad: integer("id_localidad").references(() => localidades.id),
     latitud: doublePrecision("latitud"),
     longitud: doublePrecision("longitud"),
     fechaCreado: timestamp("fecha_creado").notNull().defaultNow(),
