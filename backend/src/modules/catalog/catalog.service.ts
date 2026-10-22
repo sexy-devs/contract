@@ -1,4 +1,4 @@
-import { and, countDistinct, desc, eq, ilike, sql } from "drizzle-orm";
+import { and, countDistinct, desc, eq, sql, or, type SQLWrapper  } from "drizzle-orm";
 
 import { db } from "../../database/client";
 import {
@@ -17,15 +17,27 @@ import {
 import { NotFoundError } from "../../shared/errors/AppError";
 import type { SearchProvidersInput } from "./catalog.validation";
 
-function buildFilters(input: Pick<SearchProvidersInput, "servicio" | "zona" | "soloDisponibles">) {
+function buildFilters(input: Pick<SearchProvidersInput, "servicio" | "zona" | "soloDisponibles" | "q">) {
   const conditions = [];
 
+  if (input.q) {
+      const term = `%${input.q}%`;
+      conditions.push(
+        or(
+          normalizedText(usuarios.nombre, term),
+          normalizedText(usuarios.apellido, term),
+          normalizedText(sql`${usuarios.nombre} || ' ' || ${usuarios.apellido}`, term),
+          normalizedText(servicios.nombre, term),
+        ),
+      );
+    }
+
   if (input.servicio) {
-    conditions.push(ilike(servicios.nombre, `%${input.servicio}%`));
+    conditions.push(normalizedText(servicios.nombre, `%${input.servicio}%`));
   }
 
   if (input.zona) {
-    conditions.push(ilike(localidades.nombre, `%${input.zona}%`));
+    conditions.push(normalizedText(localidades.nombre, `%${input.zona}%`));
   }
 
   if (input.soloDisponibles) {
@@ -203,4 +215,9 @@ export async function listZones() {
 
 export async function listProvincias() {
   return db.select({ id: provincias.id, nombre: provincias.nombre }).from(provincias).orderBy(provincias.nombre);
+}
+
+function normalizedText(column: SQLWrapper, term: string) {
+  // agreguen esta extension en su bd de Postgres: CREATE EXTENSION IF NOT EXISTS unaccent;
+  return sql`unaccent(${column}) ilike unaccent(${term}::text)`;
 }

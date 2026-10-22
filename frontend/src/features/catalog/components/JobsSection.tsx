@@ -25,7 +25,7 @@ const defaultDirection: Record<string, string> = {
   distancia: "asc",
 };
 
-function JobsSection() {
+function JobsSection({ search }: { search: string }) {
   // muestra la grilla con las tarjetas de los proveedores de servicios
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [zones, setZones] = useState<{ id: number; nombre: string }[]>([]);
@@ -38,8 +38,14 @@ function JobsSection() {
   const [selectingFilters, setSelectingFilters] = useState(false);
   const [orderDirection, setOrderDirection] = useState("desc");
   const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
+  const [prevSearch, setPrevSearch] = useState(search);
   const limit = 10;
   const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  if (search !== prevSearch) {
+      setPrevSearch(search);
+      setPage(1);
+    }
 
   function changeAvailabilityFilter(filter: string) {
     // filtrado de proveedores según su disponibilidad
@@ -71,6 +77,7 @@ function JobsSection() {
 
   useEffect(() => {
     const query = new URLSearchParams();
+    if (search) query.set("q", search);
     if (zone) query.set("zona", zone);
     if (activeAvailability === "only-available")
       query.set("soloDisponibles", "true");
@@ -87,20 +94,21 @@ function JobsSection() {
         setTotal(res.pagination.total);
       })
       .catch((err) => console.log(err.message));
-  }, [zone, activeAvailability, jobType, orderBy, orderDirection, page]);
+  }, [search, activeAvailability, jobType, zone, orderBy, orderDirection, page]);
 
   return (
     <div
       id="jobs-section"
       className="flex flex-col min-[1025px]:flex-row gap-5 pt-5 pb-5 px-4 min-[1025px]:px-8 bg-blue-50 font-carlito"
     >
-      {/* barra de filtros para celu, oculto en pc */}
+      {/* barra de filtros para celu y tablet, oculto en pc */}
       <div
         id="mobile-filters-bar"
         className="flex justify-between gap-2.5 items-center min-[1025px]:hidden text-[14px]"
       >
         <button
-          className="bg-white border-2 border-gray-200 rounded-[14px] p-2.5 min-w-40 hover:bg-slate-200 hover:border-gray-300"
+          className="bg-white border-2 border-gray-200 rounded-[14px] p-2.5 min-w-30 hover:bg-slate-200
+          hover:border-gray-300"
           onClick={() => setSelectingFilters(true)}
         >
           Filtros
@@ -120,15 +128,17 @@ function JobsSection() {
         </div>
       </div>
 
-      {/* filtros se muestran como tarjeta superpuesta en celu y lateral en pc */}
+      {/* filtros se muestran como tarjeta superpuesta en celu y tablet, lateral en pc */}
       <div
         id="filters-overlay"
-        className={`${selectingFilters ? "fixed" : "hidden"} inset-0 z-99 p-5 backdrop-blur-[5px]
-              min-[1025px]:static min-[1025px]:block min-[1025px]:p-0 min-[1025px]:backdrop-blur-none min-[1025px]:z-auto`}
+        className={`${selectingFilters ? "fixed bg-black/40" : "hidden"} inset-0 z-99 p-5
+              min-[1025px]:static min-[1025px]:block min-[1025px]:p-0
+              min-[1025px]:backdrop-blur-none min-[1025px]:z-auto`}
       >
         <div
           id="filters"
-          className="bg-white p-5 border-2 border-gray-200 rounded-3xl h-fit w-70 flex flex-col gap-2.5 mx-auto min-[1025px]:mx-0"
+          className="bg-white p-5 border-2 border-gray-200 rounded-3xl
+          h-fit w-70 flex flex-col gap-2.5 mx-auto min-[1025px]:mx-0"
         >
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-[20px]">Filtros</h3>
@@ -174,7 +184,10 @@ function JobsSection() {
               <button
                 key={ava.value}
                 onClick={() => changeAvailabilityFilter(ava.value)}
-                className={`p-2.5 rounded-2xl w-full ${activeAvailability === ava.value ? "bg-white text-sky-800" : ""}`}
+                className={`p-2.5 rounded-2xl w-full ${activeAvailability === ava.value
+                            ? "bg-white text-sky-800"
+                            : ""}
+                          `}
               >
                 {ava.label}
               </button>
@@ -186,7 +199,8 @@ function JobsSection() {
       <div id="jobs-container" className="flex-1 min-w-0">
         <div className="flex justify-between">
           <h3 className="font-bold text-[16px]">
-            {total} prestadores encontrados
+            {/* plural o singular dependiendo cantidad de personas*/}
+            {total} {total === 1 ? "prestador" : "prestadores"} {total === 1 ? "encontrado" : "encontrados"}
           </h3>
 
           {/* botones de orden especificos para pc*/}
@@ -214,7 +228,8 @@ function JobsSection() {
 
         <div
           id="jobs-grid"
-          className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(320px,calc((100%-3*0.625rem)/4))),1fr))] gap-2.5 overflow-auto mt-10 mx-auto"
+          className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(320px,calc((100%-4*0.625rem)/5))),1fr))]
+          gap-2.5 overflow-auto mt-10 mx-auto"
         >
           {/* mapeo de tarjetas pasando los datos */}
           {providers.length > 0 ? (

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const searchProvidersSchema = z.object({
+  q: z.string().trim().max(100).optional(),
   servicio: z.string().trim().max(100).optional(),
   zona: z.string().trim().max(100).optional(),
   soloDisponibles: z
