@@ -90,7 +90,10 @@ export const openapiDocument = {
         tags: ["Auth"],
         summary: "Inicio de sesión (CO-02)",
         requestBody: { content: { "application/json": { schema: { $ref: "#/components/schemas/Login" } } } },
-        responses: { "200": { description: "Login exitoso" }, "401": { description: "Credenciales inválidas" } },
+        responses: {
+          "200": { description: "Login exitoso" },
+          "401": { description: "Credenciales inválidas o cuenta inhabilitada" },
+        },
       },
     },
     "/usuarios/me": {
@@ -106,6 +109,21 @@ export const openapiDocument = {
         security: [{ bearerAuth: [] }],
         requestBody: { content: { "application/json": { schema: { $ref: "#/components/schemas/ActualizarPerfil" } } } },
         responses: { "200": { description: "Perfil actualizado" } },
+      },
+    },
+    "/admin/usuarios/{id}": {
+      delete: {
+        tags: ["Administración de usuarios"],
+        summary: "Dar de baja lógica a un usuario (HU-08)",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", minimum: 1 } }],
+        responses: {
+          "200": { description: "Usuario dado de baja o ya inactivo" },
+          "400": { description: "Identificador inválido" },
+          "403": { description: "Acceso exclusivo para administradores" },
+          "404": { description: "Usuario no encontrado" },
+          "409": { description: "Autobaja o baja del último administrador activo no permitida" },
+        },
       },
     },
     "/profesionales/me": {

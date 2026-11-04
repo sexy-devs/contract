@@ -1,4 +1,4 @@
-import { and, countDistinct, desc, eq, sql, or, type SQLWrapper  } from "drizzle-orm";
+import { and, countDistinct, desc, eq, ne, or, sql, type SQLWrapper } from "drizzle-orm";
 
 import { db } from "../../database/client";
 import {
@@ -18,19 +18,19 @@ import { NotFoundError } from "../../shared/errors/AppError";
 import type { SearchProvidersInput } from "./catalog.validation";
 
 function buildFilters(input: Pick<SearchProvidersInput, "servicio" | "zona" | "soloDisponibles" | "q">) {
-  const conditions = [];
+  const conditions = [eq(usuarios.activo, true), ne(usuarios.estadoRegistro, "suspendido")];
 
   if (input.q) {
-      const term = `%${input.q}%`;
-      conditions.push(
-        or(
-          normalizedText(usuarios.nombre, term),
-          normalizedText(usuarios.apellido, term),
-          normalizedText(sql`${usuarios.nombre} || ' ' || ${usuarios.apellido}`, term),
-          normalizedText(servicios.nombre, term),
-        ),
-      );
-    }
+    const term = `%${input.q}%`;
+    const searchCondition = or(
+      normalizedText(usuarios.nombre, term),
+      normalizedText(usuarios.apellido, term),
+      normalizedText(sql`${usuarios.nombre} || ' ' || ${usuarios.apellido}`, term),
+      normalizedText(servicios.nombre, term),
+    );
+
+    if (searchCondition) conditions.push(searchCondition);
+  }
 
   if (input.servicio) {
     conditions.push(normalizedText(servicios.nombre, `%${input.servicio}%`));
@@ -137,8 +137,13 @@ export async function getProviderPublicProfile(providerId: number) {
     throw new NotFoundError("Prestador no encontrado");
   }
 
-  const [usuario, ubicacion, serviciosOfrecidos, matriculaVigente, trabajosRecientes, resenasRecientes] = await Promise.all([
-    db.query.usuarios.findFirst({ where: eq(usuarios.id, profesional.idUsuario) }),
+  const usuario = await db.query.usuarios.findFirst({ where: eq(usuarios.id, profesional.idUsuario) });
+
+  if (!usuario || !usuario.activo || usuario.estadoRegistro === "suspendido") {
+    throw new NotFoundError("Prestador no encontrado");
+  }
+
+  const [ubicacion, serviciosOfrecidos, matriculaVigente, trabajosRecientes, resenasRecientes] = await Promise.all([
     db
       .select({ zona: localidades.nombre, provincia: provincias.nombre })
       .from(usuarios)

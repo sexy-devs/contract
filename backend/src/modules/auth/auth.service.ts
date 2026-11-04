@@ -96,6 +96,10 @@ export async function login(input: LoginInput) {
     throw new UnauthorizedError("Credenciales inválidas");
   }
 
+  if (!usuario.activo || usuario.estadoRegistro === "suspendido") {
+    throw new UnauthorizedError("Credenciales inválidas");
+  }
+
   await db.update(usuarios).set({ fechaUltimoLogeo: new Date() }).where(eq(usuarios.id, usuario.id));
 
   const token = signToken({ sub: usuario.id, rol: usuario.rol });

@@ -3,6 +3,7 @@ import express from "express";
 import swaggerUi from "swagger-ui-express";
 
 import { openapiDocument } from "./docs/openapi";
+import { adminUsersRouter } from "./modules/admin-users/admin-users.routes";
 import { authRouter } from "./modules/auth/auth.routes";
 import { catalogRouter } from "./modules/catalog/catalog.routes";
 import { providerProfileRouter } from "./modules/provider-profile/provider-profile.routes";
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
 
 app.use("/api/auth", authRouter);
+app.use("/api/admin/usuarios", adminUsersRouter);
 app.use("/api/usuarios", usersRouter);
 app.use("/api/profesionales", providerProfileRouter);
 app.use("/api/catalogo", catalogRouter);

@@ -1,5 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
+import { eq } from "drizzle-orm";
 
+import { db } from "../../database/client";
+import { usuarios } from "../../database/schema";
 import { ForbiddenError, UnauthorizedError } from "../errors/AppError";
 import { verifyToken, type JwtPayload } from "../utils/jwt";
 
@@ -11,7 +14,7 @@ declare global {
   }
 }
 
-export function requireAuth(req: Request, _res: Response, next: NextFunction) {
+export async function requireAuth(req: Request, _res: Response, next: NextFunction) {
   const header = req.headers.authorization;
 
   if (!header?.startsWith("Bearer ")) {
@@ -19,13 +22,22 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   }
 
   const token = header.slice("Bearer ".length);
+  let payload: JwtPayload;
 
   try {
-    req.user = verifyToken(token);
-    next();
+    payload = verifyToken(token);
   } catch {
     throw new UnauthorizedError("Token inválido o expirado");
   }
+
+  const usuario = await db.query.usuarios.findFirst({ where: eq(usuarios.id, payload.sub) });
+
+  if (!usuario || !usuario.activo || usuario.estadoRegistro === "suspendido") {
+    throw new UnauthorizedError("Token inválido o expirado");
+  }
+
+  req.user = { sub: usuario.id, rol: usuario.rol };
+  next();
 }
 
 export function requireRole(...roles: JwtPayload["rol"][]) {
