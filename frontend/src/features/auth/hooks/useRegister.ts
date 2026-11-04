@@ -36,7 +36,7 @@ export function useRegister() {
         }
       }
 
-      navigate("/catalogo");
+      navigate("/inicio");
       return data;
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "No se pudo crear la cuenta.");

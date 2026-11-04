@@ -15,7 +15,7 @@ export function useLogin() {
     try {
       const data = await login(payload);
       localStorage.setItem("token", data.token);
-      navigate("/catalogo");
+      navigate("/inicio");
       return data;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo conectar con el servidor.");

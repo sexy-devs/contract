@@ -5,14 +5,14 @@ function SearchJobs({ onSearch }: { onSearch: (q: string) => void }) {
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
-      const t = setTimeout(() => onSearch(searchValue.trim()), 400);
-      return () => clearTimeout(t);
-    }, [searchValue, onSearch]);
+    const t = setTimeout(() => onSearch(searchValue.trim()), 400);
+    return () => clearTimeout(t);
+  }, [searchValue, onSearch]);
 
   return (
     <div id="search-jobs" className="p-10 bg-slate-200 ">
       <h2 className="text-3xl">Buscar Prestadores</h2>
-      <p className="text-gray-500">
+      <p className="text-[16px] max-[740px]:text-[14px] text-gray-500">
         Encontrá profesionales de mantenimiento según el oficio que necesitás
       </p>
       <div
@@ -27,10 +27,12 @@ function SearchJobs({ onSearch }: { onSearch: (q: string) => void }) {
           id="search-bar"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Buscar oficios o profesionales"
-          className="w-full"
+          placeholder="Buscar oficios o profesionales..."
+          className="text-[16px] w-full max-[740px]:text-[14px] h-8"
         />
-        <button onClick={() => setSearchValue("")}>{<CrossSVG/>}</button>
+        {searchValue != "" && (
+          <button onClick={() => setSearchValue("")}>{<CrossSVG />}</button>
+        )}
       </div>
     </div>
   );

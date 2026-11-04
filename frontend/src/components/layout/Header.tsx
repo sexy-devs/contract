@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import LogoContract from "./LogoContract";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 interface User {
   id: number;
@@ -8,6 +8,7 @@ interface User {
   apellido: string;
   email: string;
   fotoUrl?: string | null;
+  rol: string;
 }
 
 function Header() {
@@ -16,11 +17,8 @@ function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const getInitials = (nombre?: string, apellido?: string) => {
-    const first = nombre && nombre.charAt(0).toUpperCase();
-    const last = apellido && apellido.charAt(0).toUpperCase();
-    return `${first}${last}`;
-  };
+  const getInitials = (nombre = "", apellido = "") =>
+    `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -56,12 +54,60 @@ function Header() {
     navigate(path);
   }
 
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    `w-[75px] min-[740px]:w-[100px] text-center px-3 py-1.5 rounded-lg transition-colors ${
+      isActive ? "bg-blue-200 text-sky-800" : "text-gray-700 hover:bg-blue-100"
+    }`;
+
   return (
     <div
       id="header"
-      className="bg-white border-b border-gray-200 px-6 py-4 sm:px-10 flex items-center justify-between w-full"
+      className="bg-white border-b border-gray-200 px-6 py-4 sm:px-10 flex 
+      items-center justify-between w-full"
     >
       <LogoContract />
+
+      {/* navegadores para pc */}
+      <div id="navigators-pc" className="flex gap-2 max-[740px]:hidden">
+        <NavLink to="/inicio" className={navClass}>
+          Inicio
+        </NavLink>
+        <NavLink to="/catalogo" className={navClass}>
+          Servicios
+        </NavLink>
+        <NavLink to="/perfil" className={navClass}>
+          Perfil
+        </NavLink>
+        {user?.rol === "admin" && (
+          <NavLink to="/panel" className={navClass}>
+            Panel
+          </NavLink>
+        )}
+      </div>
+
+      {/* navegadores para celu */}
+      <div
+        id="navigators-mobile"
+        className="min-[740px]:hidden fixed bottom-0 left-0 
+        flex gap-2 items-center justify-center w-full bg-white pt-2.5 pb-2.5 
+        z-9 border-t border-gray-200 text-[14px]"
+      >
+        <NavLink to="/inicio" className={navClass}>
+          Inicio
+        </NavLink>
+        <NavLink to="/catalogo" className={navClass}>
+          Servicios
+        </NavLink>
+        <NavLink to="/perfil" className={navClass}>
+          Perfil
+        </NavLink>
+        {user?.rol === "admin" && (
+          <NavLink to="/panel" className={navClass}>
+            Panel
+          </NavLink>
+        )}
+      </div>
+
       <div ref={menuRef} className="relative">
         <button
           className="

@@ -6,6 +6,8 @@ import Register from './features/auth/pages/Register';
 import Catalog from './features/catalog/pages/Catalog';
 import Profile from './features/profile/pages/Profile';
 import Chat from './features/messages/pages/Chat';
+import Home from "./features/home/pages/Home";
+import Panel from "./features/admin/pages/panel";
 
 function PrivateRoute({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<"loading" | "ok" | "fail">("loading");
@@ -32,6 +34,11 @@ function App() {
         <Route path="/" element={<Navigate to="/iniciar-sesion" replace />} />
         <Route path="/iniciar-sesion" element={<Login />} />
         <Route path="/registrarse" element={<Register />} />
+        <Route path="/inicio" element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        }/ >
         <Route path="/catalogo" element={
           <PrivateRoute>
             <Catalog />
@@ -40,6 +47,11 @@ function App() {
         <Route path="/perfil" element={
           <PrivateRoute>
             <Profile />
+          </PrivateRoute>
+        } />
+        <Route path="/panel" element={
+          <PrivateRoute>
+            <Panel />
           </PrivateRoute>
         } />
         <Route path="/chat" element={
