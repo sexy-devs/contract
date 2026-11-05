@@ -18,7 +18,6 @@ function Profile() {
 
   return (
     <main className="min-h-screen bg-indigo-50">
-      <Header />
       <div className="px-4 py-8 sm:px-8">
         {loading && <p className="text-gray-600">Cargando...</p>}
         {!loading && error && <p className="text-red-600">{error}</p>}

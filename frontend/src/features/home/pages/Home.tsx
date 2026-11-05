@@ -1,4 +1,3 @@
-import Header from "../../../components/layout/Header";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -71,13 +70,12 @@ function Home() {
   }, []);
 
   return (
-    <div id="home-page" className="bg-blue-50">
-      <Header />
+    <div id="home-page" className="bg-blue-50 ">
       <section
         id="content"
-        className="w-screen h-screen pl-10 pr-10 font-carlito"
+        className=" pl-10 pr-10 font-carlito w-screen h-screen"
       >
-        <h1 className="text-3xl mt-10 mb-10">
+        <h1 className="text-3xl pt-10">
           <b>
             Hola, {user?.nombre} {user?.apellido}
           </b>

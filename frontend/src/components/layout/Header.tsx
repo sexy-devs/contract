@@ -20,6 +20,11 @@ function Header() {
   const getInitials = (nombre = "", apellido = "") =>
     `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
 
+  function closeSession(){
+    localStorage.removeItem("token");
+    goTo("/iniciar-sesion")
+  }
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -55,7 +60,7 @@ function Header() {
   }
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `w-[75px] min-[740px]:w-[100px] text-center px-3 py-1.5 rounded-lg transition-colors ${
+    `w-[80px] min-[740px]:w-[100px] text-center px-3 py-1.5 rounded-lg transition-colors ${
       isActive ? "bg-blue-200 text-sky-800" : "text-gray-700 hover:bg-blue-100"
     }`;
 
@@ -76,7 +81,7 @@ function Header() {
           Servicios
         </NavLink>
         <NavLink to="/perfil" className={navClass}>
-          Perfil
+          Mi perfil
         </NavLink>
         {user?.rol === "admin" && (
           <NavLink to="/panel" className={navClass}>
@@ -99,7 +104,7 @@ function Header() {
           Servicios
         </NavLink>
         <NavLink to="/perfil" className={navClass}>
-          Perfil
+          Mi perfil
         </NavLink>
         {user?.rol === "admin" && (
           <NavLink to="/panel" className={navClass}>
@@ -149,6 +154,12 @@ function Header() {
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-sky-800"
             >
               Servicios
+            </button>
+            <button
+              onClick={()=> closeSession()}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-sky-800"
+            >
+              Cerrar sesión
             </button>
           </div>
         )}
