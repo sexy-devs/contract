@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 const duration = 5000;
 
-function Unauthorized() {
+function Unauthorized({ toPage }: { toPage: string }) {
+  // controla el render y contexto del 401.
+  // toPage acepta strings para el endpoint al cual redirigir después del mensaje.
+  // Ej: "/inicio", "/iniciar-sesion""
   const navigate = useNavigate();
   const [progress, setProgress] = useState(100);
 
@@ -16,12 +19,12 @@ function Unauthorized() {
 
       if (elapsed >= duration) {
         clearInterval(tick);
-        navigate("/iniciar-sesion", { replace: true });
+        navigate(toPage, { replace: true });
       }
     }, 30);
 
     return () => clearInterval(tick);
-  }, [navigate]);
+  }, [navigate, toPage]);
 
   return (
     <div
@@ -39,10 +42,10 @@ function Unauthorized() {
         </div>
       </div>
       <button
-        onClick={() => navigate("/iniciar-sesion")}
+        onClick={() => navigate(toPage)}
         className="rounded-lg bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900"
       >
-        Iniciar sesión
+        {toPage === "/inicio" ? "Volver a inicio" : "Iniciar sesión"}
       </button>
     </div>
   );

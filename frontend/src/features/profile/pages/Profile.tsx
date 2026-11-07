@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Header from "../../../components/layout/Header";
 import ClienteProfile from "../components/ClienteProfile";
 import PrestadorProfile from "../components/PrestadorProfile";
 import { getMe, type UserProfile } from "../api/usersApi";

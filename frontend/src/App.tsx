@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
   Outlet,
+  useOutletContext,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { apiClient } from "./lib/api";
@@ -17,13 +18,20 @@ import Home from "./features/home/pages/Home";
 import Panel from "./features/admin/pages/panel";
 import Header from "./components/layout/Header";
 
+type User = { rol: "cliente" | "profesional" | "admin" };
+
 function PrivateRoute() {
+  // protección de ruta basada en token de sesión válido
   const [status, setStatus] = useState<"loading" | "ok" | "fail">("loading");
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     apiClient
-      .get("/usuarios/me")
-      .then(() => setStatus("ok"))
+      .get<User>("/usuarios/me")
+      .then((data) => {
+        setUser(data);
+        setStatus("ok");
+      })
       .catch(() => {
         localStorage.removeItem("token");
         setStatus("fail");
@@ -31,15 +39,26 @@ function PrivateRoute() {
   }, []);
 
   if (status === "loading") return null;
-  if (status === "fail") return <Unauthorized />;
+  if (status === "fail") return <Unauthorized toPage={"/iniciar-sesion"}/>;
   return (
     <>
-      {/* ahora el header se monta al cargar el front, para evitar la recarga / flashes 
+      {/*el header se monta al cargar el front, para evitar la recarga / flashes 
       del header en cada sección*/}
       <Header />
-      <Outlet />
+      <Outlet context={user} />
     </>
   );
+}
+
+function ProtectedRoleRoute({ roles }: { roles: User["rol"][] }) {
+  // protección de ruta según rol
+  const user = useOutletContext<User>();
+
+  if (!roles.includes(user.rol)) {
+    return <Unauthorized toPage={"/inicio"}/>;
+  };
+
+  return <Outlet context={user} />;
 }
 
 function App() {
@@ -53,7 +72,9 @@ function App() {
           <Route path="/inicio" element={<Home />} />
           <Route path="/catalogo" element={<Catalog />} />
           <Route path="/perfil" element={<Profile />} />
-          <Route path="/panel" element={<Panel />} />
+          <Route element={<ProtectedRoleRoute roles={["admin"]} />}>
+            <Route path="/panel" element={<Panel />} />
+          </Route>
           <Route path="/chat" element={<Chat />} />
         </Route>
       </Routes>
