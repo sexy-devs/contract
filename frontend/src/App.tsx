@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
   Outlet,
+  useLocation,
   useOutletContext,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -24,6 +25,8 @@ function PrivateRoute() {
   // protección de ruta basada en token de sesión válido
   const [status, setStatus] = useState<"loading" | "ok" | "fail">("loading");
   const [user, setUser] = useState<User | null>(null);
+  const location = useLocation();
+  const isAdminPanel = location.pathname.startsWith("/panel");
 
   useEffect(() => {
     apiClient
@@ -42,9 +45,9 @@ function PrivateRoute() {
   if (status === "fail") return <Unauthorized toPage={"/iniciar-sesion"}/>;
   return (
     <>
-      {/*el header se monta al cargar el front, para evitar la recarga / flashes 
+      {/*el header se monta al cargar el front, para evitar la recarga / flashes
       del header en cada sección*/}
-      <Header />
+      {!isAdminPanel && <Header />}
       <Outlet context={user} />
     </>
   );

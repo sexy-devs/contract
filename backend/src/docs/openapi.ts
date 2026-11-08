@@ -40,6 +40,17 @@ export const openapiDocument = {
           fotoUrl: { type: "string", format: "uri" },
         },
       },
+      ActualizarUsuarioAdmin: {
+        type: "object",
+        required: ["nombre", "apellido", "email", "telefono", "rol"],
+        properties: {
+          nombre: { type: "string" },
+          apellido: { type: "string" },
+          email: { type: "string", format: "email" },
+          telefono: { type: "string" },
+          rol: { type: "string", enum: ["cliente", "profesional", "admin"] },
+        },
+      },
       ActualizarPerfilProfesional: {
         type: "object",
         properties: {
@@ -111,7 +122,36 @@ export const openapiDocument = {
         responses: { "200": { description: "Perfil actualizado" } },
       },
     },
+    "/admin/usuarios": {
+      get: {
+        tags: ["Administración de usuarios"],
+        summary: "Listar usuarios con búsqueda y filtro por rol (HU-05)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "search", in: "query", schema: { type: "string", maxLength: 100 } },
+          { name: "rol", in: "query", schema: { type: "string", enum: ["cliente", "profesional", "admin"] } },
+        ],
+        responses: {
+          "200": { description: "Listado de usuarios" },
+          "403": { description: "Acceso exclusivo para administradores" },
+        },
+      },
+    },
     "/admin/usuarios/{id}": {
+      patch: {
+        tags: ["Administración de usuarios"],
+        summary: "Editar datos y rol de un usuario (HU-05, HU-07)",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", minimum: 1 } }],
+        requestBody: { content: { "application/json": { schema: { $ref: "#/components/schemas/ActualizarUsuarioAdmin" } } } },
+        responses: {
+          "200": { description: "Usuario actualizado" },
+          "400": { description: "Campos incompletos o datos inválidos" },
+          "403": { description: "Acceso exclusivo para administradores" },
+          "404": { description: "Usuario no encontrado" },
+          "409": { description: "Email en uso o último administrador" },
+        },
+      },
       delete: {
         tags: ["Administración de usuarios"],
         summary: "Dar de baja lógica a un usuario (HU-08)",
